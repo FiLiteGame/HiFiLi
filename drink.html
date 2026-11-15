@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quầy Nước Chanh - Drink Stand</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        user-select: none;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #1a1c2c;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: "VT323", monospace;
+        overflow: hidden;
+      }
+
+      #game-container {
+        position: relative;
+        width: 800px;
+        height: 600px;
+        border: 6px solid #111;
+        box-shadow:
+          0 0 0 4px #00bcd4,
+          0 20px 40px rgba(0, 0, 0, 0.8);
+        background-color: #f0f3f8;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* 1. THANH TRÊN CÙNG */
+      .top-bar {
+        height: 50px;
+        background-color: #1a1c2c;
+        border-bottom: 4px solid #111;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        color: #fff;
+        font-size: 24px;
+      }
+
+      .badge-money {
+        background-color: #4caf50;
+        padding: 2px 10px;
+        border: 2px solid #111;
+        box-shadow: 2px 2px 0 #111;
+      }
+
+      .btn-back {
+        background-color: #e74c3c;
+        color: #fff;
+        border: 2px solid #111;
+        padding: 2px 14px;
+        font-family: "VT323", monospace;
+        font-size: 22px;
+        cursor: pointer;
+        box-shadow: 2px 2px 0 #111;
+      }
+      .btn-back:active {
+        transform: translateY(2px);
+        box-shadow: 0 0 0 #111;
+      }
+
+      /* 2. GIAO DIỆN CHÍNH (CHIA BẾP VÀ QUẦY BÁN) */
+      .stand-layout {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        padding: 15px;
+        background: #e2e8f0;
+        overflow: hidden;
+      }
+
+      .section-box {
+        background: #fff;
+        border: 4px solid #111;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      .section-title {
+        font-size: 24px;
+        color: #1d266b;
+        border-bottom: 3px dashed #1d266b;
+        padding-bottom: 5px;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+      }
+
+      /* Khu vực Bếp (Pha chế) */
+      .recipe-card {
+        background: #f8f9fa;
+        border: 3px solid #333;
+        padding: 10px;
+        margin-bottom: 10px;
+        box-shadow: 2px 2px 0 #333;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .btn-craft {
+        background-color: #ffde00;
+        color: #111;
+        border: 2px solid #111;
+        padding: 4px;
+        font-family: "VT323", monospace;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 2px 2px 0 #111;
+      }
+      .btn-craft:hover {
+        background-color: #ffee55;
+      }
+      .btn-craft:active {
+        transform: translateY(2px);
+        box-shadow: 0 0 0 #111;
+      }
+
+      /* Khu vực Quầy Bán */
+      .counter-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .price-setting {
+        background: #e3f2fd;
+        border: 3px solid #2980b9;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .price-setting input {
+        width: 70px;
+        font-family: "VT323", monospace;
+        font-size: 22px;
+        text-align: center;
+        border: 2px solid #111;
+      }
+
+      .btn-start-sell {
+        background-color: #2ecc71;
+        color: #fff;
+        border: 2px solid #111;
+        padding: 6px;
+        font-family: "VT323", monospace;
+        font-size: 22px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 2px 2px 0 #111;
+      }
+      .btn-start-sell:active {
+        transform: translateY(2px);
+        box-shadow: 0 0 0 #111;
+      }
+
+      .customer-log {
+        flex: 1;
+        background: #111;
+        color: #00ff00;
+        font-family: "VT323", monospace;
+        font-size: 18px;
+        padding: 10px;
+        border: 2px solid #333;
+        overflow-y: auto;
+        max-height: 180px;
+      }
+
+      /* Kho đồ nhỏ gọn hiển thị trong quầy */
+      .mini-inv {
+        font-size: 18px;
+        background: #fff9c4;
+        border: 2px solid #fbc02d;
+        padding: 8px;
+        margin-bottom: 10px;
+      }
+
+      .notification-bar {
+        height: 40px;
+        background-color: #111;
+        color: #ffde00;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- THANH TRÊN CÙNG -->
+      <div class="top-bar">
+        <div>🧃 <b>Quầy Nước Chanh Của Bạn</b></div>
+        <div style="display: flex; align-items: center; gap: 15px">
+          <span class="badge-money"
+            >💰 $<span id="balance-display">15.00</span></span
+          >
+          <button class="btn-back" onclick="goToMap()">⬅ Về Bản Đồ</button>
+        </div>
+      </div>
+
+      <!-- NỘI DUNG CHÍNH -->
+      <div class="stand-layout">
+        <!-- CỘT 1: KHO ĐỒ & BẾP PHA CHẾ -->
+        <div class="section-box">
+          <div class="section-title">🍳 Bếp Pha Chế & Kho Đồ</div>
+
+          <div class="mini-inv" id="mini-inv-display">
+            <b>Kho nguyên liệu:</b> Đang tải...
+          </div>
+
+          <!-- Công thức 1 -->
+          <div class="recipe-card">
+            <div><b>🍋 Nước Chanh Truyền Thống</b></div>
+            <div style="font-size: 18px; color: #555">
+              Cần: 1 Chanh Tươi, 1 Đường, 1 Cốc Giấy, 1 Ống Hút
+            </div>
+            <button class="btn-craft" onclick="craftDrink('lemonade', 1)">
+              Pha 1 Cốc
+            </button>
+          </div>
+
+          <!-- Công thức 2 -->
+          <div class="recipe-card">
+            <div><b>🍯 Nước Chanh Mật Ong Độc Quyền</b></div>
+            <div style="font-size: 18px; color: #555">
+              Cần: 1 Chanh Tươi, 1 Mật Ong, 1 Cốc Giấy, 1 Ống Hút
+            </div>
+            <button class="btn-craft" onclick="craftDrink('honey_lemonade', 1)">
+              Pha 1 Cốc
+            </button>
+          </div>
+        </div>
+
+        <!-- CỘT 2: QUẦY BÁN & KHÁCH HÀNG -->
+        <div class="section-box">
+          <div class="section-title">🛒 Quầy Bán Hàng</div>
+
+          <div class="counter-panel">
+            <div style="font-size: 20px">
+              Sản phẩm sẵn sàng bán:
+              <b id="ready-stock" style="color: #27ae60; font-size: 24px">0</b>
+              cốc
+            </div>
+
+            <div class="price-setting">
+              <span>Định giá bán (1 Cốc):</span>
+              <div style="display: flex; align-items: center; gap: 5px">
+                <span>$</span>
+                <input
+                  type="number"
+                  id="sell-price"
+                  value="2.50"
+                  step="0.5"
+                  min="0.5"
+                />
+              </div>
+            </div>
+
+            <button class="btn-start-sell" onclick="simulateCustomers()">
+              🚀 Mở Cửa Đón Khách
+            </button>
+
+            <div style="font-size: 20px; margin-top: 5px">
+              📜 Nhật ký khách hàng:
+            </div>
+            <div class="customer-log" id="customer-log">
+              [Hệ thống] Quầy đã sẵn sàng mở cửa. Hãy pha chế và định giá hợp
+              lý!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THANH THÔNG BÁO -->
+      <div class="notification-bar" id="notification-text">
+        Mẹo: Trời nắng gắt khách hàng rất khát, bạn có thể tăng giá bán nhẹ để
+        kiếm lời cao hơn!
+      </div>
+    </div>
+
+    <script>
+      // 1. DỮ LIỆU TÀI CHÍNH & KHO ĐỒ
+      let balance = parseFloat(localStorage.getItem("playerBalance")) || 15.0;
+      let inventory = JSON.parse(localStorage.getItem("playerInventory")) || {};
+      let readyStock = parseInt(localStorage.getItem("readyStock")) || 0;
+
+      document.getElementById("balance-display").textContent =
+        balance.toFixed(2);
+      document.getElementById("ready-stock").textContent = readyStock;
+
+      // Cập nhật hiển thị kho nguyên liệu thu nhỏ
+      function updateMiniInventory() {
+        const invDisplay = document.getElementById("mini-inv-display");
+        const keys = Object.keys(inventory);
+        if (keys.length === 0) {
+          invDisplay.innerHTML =
+            "<b>Kho nguyên liệu:</b> Trống (Hãy ghé Siêu thị MegaValue mua thêm!)";
+          return;
+        }
+        let text = "<b>Kho nguyên liệu:</b> ";
+        keys.forEach((k) => {
+          if (inventory[k] > 0) text += `${k}: x${inventory[k]} | `;
+        });
+        invDisplay.innerHTML = text;
+      }
+      updateMiniInventory();
+
+      // 2. PHA CHẾ TRONG BẾP (TỰ ĐỘNG TRỪ HAO NGUYÊN LIỆU)
+      function craftDrink(type, amount) {
+        if (type === "lemonade") {
+          // Cần: Chanh Tươi (Kg), Đường Trắng (Kg), Cốc Giấy (Hộp 10c), Ống Hút (Bịch 50c) -> Dùng 1 đơn vị mỗi loại
+          if (
+            (inventory["🍋 Chanh Tươi (Kg)"] || 0) >= 1 &&
+            (inventory["🧂 Đường Trắng (Kg)"] || 0) >= 1 &&
+            (inventory["🥤 Cốc Giấy (Hộp 10c)"] || 0) >= 1 &&
+            (inventory["🥤 Ống Hút (Bịch 50c)"] || 0) >= 1
+          ) {
+            inventory["🍋 Chanh Tươi (Kg)"] -= 1;
+            inventory["🧂 Đường Trắng (Kg)"] -= 1;
+            inventory["🥤 Cốc Giấy (Hộp 10c)"] -= 1;
+            inventory["🥤 Ống Hút (Bịch 50c)"] -= 1;
+
+            readyStock += 1;
+            saveAndRefresh();
+            showNotification(
+              "✅ Pha chế thành công 1 Cốc Nước Chanh Truyền Thống!",
+            );
+          } else {
+            showNotification(
+              "❌ Không đủ nguyên liệu! Hãy ghé siêu thị mua thêm.",
+            );
+          }
+        } else if (type === "honey_lemonade") {
+          // Cần: Chanh Tươi, Mật Ong, Cốc Giấy, Ống Hút
+          if (
+            (inventory["🍋 Chanh Tươi (Kg)"] || 0) >= 1 &&
+            (inventory["🍯 Mật Ong Nguyên Chất"] || 0) >= 1 &&
+            (inventory["🥤 Cốc Giấy (Hộp 10c)"] || 0) >= 1 &&
+            (inventory["🥤 Ống Hút (Bịch 50c)"] || 0) >= 1
+          ) {
+            inventory["🍋 Chanh Tươi (Kg)"] -= 1;
+            inventory["🍯 Mật Ong Nguyên Chất"] -= 1;
+            inventory["🥤 Cốc Giấy (Hộp 10c)"] -= 1;
+            inventory["🥤 Ống Hút (Bịch 50c)"] -= 1;
+
+            readyStock += 2; // Nước chanh mật ong chất lượng cao tính 2 đơn vị stock hoặc tùy chỉnh
+            saveAndRefresh();
+            showNotification(
+              "✅ Pha chế thành công Nước Chanh Mật Ong Độc Quyền!",
+            );
+          } else {
+            showNotification("❌ Không đủ nguyên liệu mật ong hoặc chanh!");
+          }
+        }
+      }
+
+      function saveAndRefresh() {
+        localStorage.setItem("playerInventory", JSON.stringify(inventory));
+        localStorage.setItem("readyStock", readyStock);
+        document.getElementById("ready-stock").textContent = readyStock;
+        updateMiniInventory();
+      }
+
+      // 3. MÔ PHỎNG KHÁCH HÀNG ĐẾN MUA & MẶC CẢ
+      function simulateCustomers() {
+        if (readyStock <= 0) {
+          logCustomer(
+            "⚠️ Quầy không có nước chanh nào để bán! Hãy vào bếp pha chế trước.",
+          );
+          return;
+        }
+
+        const priceInput = parseFloat(
+          document.getElementById("sell-price").value,
+        );
+        if (isNaN(priceInput) || priceInput <= 0) {
+          alert("Vui lòng nhập giá bán hợp lệ!");
+          return;
+        }
+
+        const logBox = document.getElementById("customer-log");
+        let soldCount = 0;
+        let earnedMoney = 0;
+
+        // Giả lập 3-5 lượt khách hàng ghé qua
+        let visitors = Math.floor(Math.random() * 3) + 3;
+
+        logBox.innerHTML = `[Hệ thống] Mở cửa đón khách với giá $${priceInput.toFixed(2)}/cốc...\n`;
+
+        for (let i = 0; i < visitors; i++) {
+          if (readyStock <= 0) break;
+
+          // Khách hàng đánh giá giá tiền (Mức giá hợp lý theo thị trường nắng gắt là từ $2.0 đến $3.5)
+          if (priceInput > 4.5) {
+            // Quá đắt, khách chê và bỏ đi
+            logBox.innerHTML += `> Khách #${i + 1}: "Giá $${priceInput} đắt quá trời! Thôi tôi không mua đâu." (Bỏ đi)\n`;
+          } else if (priceInput > 3.2) {
+            // Khách mặc cả hoặc phân vân
+            if (Math.random() > 0.5) {
+              readyStock--;
+              soldCount++;
+              earnedMoney += priceInput;
+              logBox.innerHTML += `> Khách #${i + 1}: "Hơi đắt đấy, nhưng trời nóng quá nên đành mua vậy." (-1 cốc)\n`;
+            } else {
+              logBox.innerHTML += `> Khách #${i + 1}: "Giá chát thế nhỉ, qua quán khác thôi." (Không mua)\n`;
+            }
+          } else {
+            // Giá hợp lý, khách mua ngay lập tức
+            readyStock--;
+            soldCount++;
+            earnedMoney += priceInput;
+            logBox.innerHTML += `> Khách #${i + 1}: "Nước chanh ngon tuyệt! Giá $${priceInput} quá ổn." (-1 cốc)\n`;
+          }
+        }
+
+        // Cập nhật số tiền thu được vào balance tài khoản ngân hàng
+        balance += earnedMoney;
+        localStorage.setItem("playerBalance", balance.toFixed(2));
+        document.getElementById("balance-display").textContent =
+          balance.toFixed(2);
+
+        saveAndRefresh();
+        logBox.innerHTML += `\n✨ Kết quả: Đã bán được ${soldCount} cốc, thu về $${earnedMoney.toFixed(2)}!`;
+        logBox.scrollTop = logBox.scrollHeight;
+      }
+
+      function logCustomer(msg) {
+        const logBox = document.getElementById("customer-log");
+        logBox.innerHTML += `\n${msg}`;
+        logBox.scrollTop = logBox.scrollHeight;
+      }
+
+      function showNotification(text) {
+        document.getElementById("notification-text").textContent = text;
+      }
+
+      function goToMap() {
+        window.location.href = "map.html";
+      }
+    </script>
+  </body>
+</html>

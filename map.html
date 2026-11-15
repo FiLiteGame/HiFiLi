@@ -1,0 +1,1095 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixel Business World — Town Map</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #18202b;
+        --navy: #202b50;
+        --cream: #fff4d6;
+        --gold: #ffd84d;
+        --blue: #4568c7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #111827;
+      }
+      body {
+        display: grid;
+        place-items: center;
+        font-family: "VT323", monospace;
+        color: #fff;
+      }
+      #game-container {
+        position: relative;
+        width: min(100vw, 133.333vh);
+        height: min(100vh, 75vw);
+        aspect-ratio: 4/3;
+        overflow: hidden;
+        border: 6px solid #10151d;
+        box-shadow:
+          0 0 0 4px #3d4855,
+          0 24px 70px #000b;
+        background: #83c95b;
+      }
+      #map-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+        cursor: crosshair;
+      }
+      .top-bar {
+        position: absolute;
+        z-index: 10;
+        inset: 0 0 auto;
+        height: 48px;
+        background: #202943;
+        border-bottom: 4px solid #10151d;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        gap: 8px;
+        font-size: 22px;
+      }
+      .top-left-info,
+      .top-right-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .player-name {
+        color: var(--gold);
+        font-weight: bold;
+      }
+      .pixel-badge,
+      .money-badge,
+      .pixel-btn {
+        border: 2px solid #10151d;
+        box-shadow: 2px 2px 0 #10151d;
+        padding: 2px 8px;
+        white-space: nowrap;
+      }
+      .pixel-badge {
+        background: var(--gold);
+        color: #171717;
+      }
+      .money-badge {
+        background: #398c4c;
+        color: white;
+      }
+      .pixel-btn {
+        font: 20px "VT323";
+        background: #4568c7;
+        color: #fff;
+        cursor: pointer;
+      }
+      .pixel-btn:hover {
+        filter: brightness(1.18);
+      }
+      .objective-box {
+        position: absolute;
+        z-index: 8;
+        top: 58px;
+        left: 12px;
+        background: #202943ed;
+        border: 3px solid #10151d;
+        padding: 7px 10px;
+        font-size: 20px;
+        box-shadow: 3px 3px 0 #0006;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .tour-btn {
+        font: 18px "VT323";
+        background: #ffad32;
+        border: 2px solid #10151d;
+        padding: 1px 7px;
+        cursor: pointer;
+      }
+      .bottom-action-bar {
+        position: absolute;
+        z-index: 10;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--gold);
+        color: #171717;
+        border: 4px solid #10151d;
+        box-shadow: 0 4px 0 #10151d;
+        padding: 7px 18px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .bottom-action-bar:active {
+        transform: translate(-50%, 3px);
+        box-shadow: 0 1px 0 #10151d;
+      }
+      .rest-text {
+        font-size: 24px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+      .rest-key {
+        background: #171717;
+        color: var(--gold);
+        padding: 2px 6px;
+        font-size: 17px;
+      }
+
+      #phone-modal {
+        position: absolute;
+        z-index: 30;
+        right: 16px;
+        top: 58px;
+        width: 310px;
+        max-height: calc(100% - 115px);
+        background: #202b67;
+        border: 5px solid var(--gold);
+        box-shadow: 0 10px 35px #000b;
+        display: none;
+        flex-direction: column;
+        color: #111;
+      }
+      .phone-header {
+        background: #111a43;
+        color: var(--gold);
+        padding: 8px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid var(--gold);
+        font-size: 22px;
+      }
+      .phone-close-btn {
+        font: 20px "VT323";
+        background: #d94b4b;
+        color: #fff;
+        border: 2px solid #111;
+        cursor: pointer;
+      }
+      .phone-body {
+        padding: 11px;
+        background: #edf1f8;
+        overflow: auto;
+        font-size: 20px;
+        min-height: 180px;
+      }
+      .phone-nav {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+      .app-tile {
+        background: #fff;
+        border: 3px solid #18202b;
+        box-shadow: 3px 3px 0 #18202b;
+        padding: 12px 6px;
+        text-align: center;
+        cursor: pointer;
+      }
+      .app-tile:hover {
+        background: #fff4bd;
+      }
+      .app-icon {
+        font-size: 30px;
+      }
+      .app-name {
+        font-size: 20px;
+        color: #202b67;
+        font-weight: bold;
+      }
+      .app-content {
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .back-to-home {
+        align-self: flex-start;
+        background: #4568c7;
+        color: white;
+        border: 2px solid #111;
+        padding: 2px 8px;
+        font: 18px "VT323";
+        cursor: pointer;
+      }
+      .news-card,
+      .bank-card {
+        background: white;
+        border: 2px solid #18202b;
+        padding: 9px;
+        box-shadow: 2px 2px 0 #18202b;
+      }
+      .map-btn-list {
+        display: grid;
+        gap: 6px;
+      }
+      .map-btn-list button {
+        width: 100%;
+        text-align: left;
+        background: white;
+        border: 2px solid #18202b;
+        padding: 7px;
+        font: 20px "VT323";
+        cursor: pointer;
+      }
+      .map-btn-list button:hover {
+        background: #4568c7;
+        color: #fff;
+      }
+
+      /* NPC DIALOGUE */
+      #dialog-box {
+        position: absolute;
+        z-index: 25;
+        left: 18px;
+        right: 18px;
+        bottom: 66px;
+        min-height: 150px;
+        background: #fff8e8;
+        color: #18202b;
+        border: 4px solid #26366e;
+        box-shadow:
+          inset 0 0 0 2px white,
+          0 5px 0 #0007;
+        padding: 10px 14px;
+        display: none;
+        font-size: 22px;
+      }
+      .dialog-layout {
+        display: flex;
+        align-items: stretch;
+        gap: 14px;
+        min-height: 122px;
+      }
+      #npc-portrait-wrap {
+        width: 126px;
+        min-width: 126px;
+        background: #dce8f5;
+        border: 3px solid #26366e;
+        box-shadow: 3px 3px 0 #b5a98b;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      #npc-portrait {
+        width: 112px;
+        height: 112px;
+        image-rendering: pixelated;
+      }
+      .dialog-copy {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      #dialog-title {
+        font-size: 23px;
+        font-weight: bold;
+        color: #26366e;
+        margin-bottom: 1px;
+      }
+      #dialog-role {
+        font-size: 18px;
+        color: #55708b;
+      }
+      #dialog-text {
+        font-size: 21px;
+        line-height: 1.12;
+      }
+      #dialog-task {
+        margin-top: 3px;
+        padding: 5px 8px;
+        background: #f4e6b8;
+        border: 2px dashed #b28a35;
+        font-size: 19px;
+      }
+      #dialog-task b {
+        color: #7b5514;
+      }
+
+      #morning-popup {
+        position: absolute;
+        z-index: 20;
+        top: 112px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(92%, 570px);
+        background: #fff8e8;
+        color: #18202b;
+        border: 4px solid #26366e;
+        box-shadow: 0 6px 0 #0007;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 21px;
+      }
+      #morning-popup button {
+        flex-shrink: 0;
+        background: #e85b55;
+        color: white;
+        border: 2px solid #111;
+        padding: 4px 9px;
+        font: 19px "VT323";
+        cursor: pointer;
+      }
+      #toast {
+        position: absolute;
+        z-index: 40;
+        top: 54px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #17213b;
+        color: #fff;
+        border: 3px solid var(--gold);
+        padding: 7px 12px;
+        font-size: 20px;
+        display: none;
+      }
+
+      @media (max-width: 600px) {
+        .dialog-layout {
+          gap: 8px;
+        }
+        #npc-portrait-wrap {
+          width: 94px;
+          min-width: 94px;
+        }
+        #npc-portrait {
+          width: 84px;
+          height: 84px;
+        }
+        #dialog-box {
+          min-height: 125px;
+          padding: 7px 8px;
+        }
+        #dialog-title {
+          font-size: 19px;
+        }
+        #dialog-role {
+          font-size: 15px;
+        }
+        #dialog-text {
+          font-size: 18px;
+        }
+        #dialog-task {
+          font-size: 16px;
+        }
+        .top-bar {
+          height: 42px;
+          padding: 0 6px;
+          font-size: 16px;
+        }
+        .top-left-info,
+        .top-right-info {
+          gap: 4px;
+        }
+        .pixel-badge,
+        .money-badge,
+        .pixel-btn {
+          font-size: 15px;
+          padding: 1px 4px;
+        }
+        .objective-box {
+          top: 48px;
+          left: 6px;
+          font-size: 15px;
+          padding: 4px 6px;
+        }
+        .tour-btn {
+          font-size: 15px;
+        }
+        .bottom-action-bar {
+          bottom: 7px;
+          padding: 4px 9px;
+          gap: 6px;
+        }
+        .rest-text {
+          font-size: 17px;
+        }
+        .rest-key {
+          font-size: 14px;
+        }
+        #phone-modal {
+          right: 5px;
+          top: 48px;
+          width: min(290px, 90%);
+        }
+        #dialog-box {
+          bottom: 52px;
+          font-size: 18px;
+        }
+        #morning-popup {
+          top: 90px;
+          font-size: 17px;
+          padding: 7px;
+        }
+        #morning-popup button {
+          font-size: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas
+        id="map-canvas"
+        width="800"
+        height="600"
+        aria-label="Bản đồ Pixel Business World"
+      ></canvas>
+
+      <div class="top-bar">
+        <div class="top-left-info">
+          <span class="player-name" id="player-name-display">Minh</span>
+          <span class="pixel-badge" id="day-counter">Ngày 1/15</span>
+        </div>
+        <div class="top-right-info">
+          <span id="time-weather">06:58 ☀️ Nắng đẹp</span>
+          <span class="money-badge"
+            >💰 <span id="balance-display">100.00</span> Fi</span
+          >
+          <button class="pixel-btn" onclick="nextDay()">⏩ Ngày</button>
+          <button class="pixel-btn" onclick="togglePhone()">📱</button>
+        </div>
+      </div>
+
+      <div class="objective-box">
+        <span>🎯 Mục tiêu: Kiếm 2,000 Fi trong 15 ngày!</span>
+        <button
+          class="tour-btn"
+          onclick="
+            showToast('Khám phá thị trấn, đọc bản tin và ghé các cửa hàng nhé!')
+          "
+        >
+          ? Tour
+        </button>
+      </div>
+
+      <div id="morning-popup">
+        <span
+          >📰 <b>Chào buổi sáng!</b> Kiểm tra điện thoại để đọc bản tin trước
+          khi kinh doanh.</span
+        >
+        <button
+          onclick="
+            closeMorningPopup();
+            togglePhone();
+          "
+        >
+          📱 Xem tin
+        </button>
+      </div>
+
+      <div class="bottom-action-bar" onclick="restAtHome()">
+        <span>🏠</span>
+        <span class="rest-text">Nghỉ ngơi tại nhà</span>
+        <span class="rest-key">SPACE / TAP</span>
+      </div>
+
+      <div id="phone-modal">
+        <div class="phone-header">
+          <span id="phone-title">POCKET PHONE</span>
+          <button class="phone-close-btn" onclick="togglePhone()">✕</button>
+        </div>
+        <div class="phone-body">
+          <div id="app-grid" class="phone-nav">
+            <div class="app-tile" onclick="openApp('map')">
+              <div class="app-icon">🗺️</div>
+              <div class="app-name">Bản đồ</div>
+            </div>
+            <div class="app-tile" onclick="openApp('news')">
+              <div class="app-icon">📰</div>
+              <div class="app-name">Bản tin</div>
+            </div>
+            <div class="app-tile" onclick="openApp('bank')">
+              <div class="app-icon">💳</div>
+              <div class="app-name">Ngân hàng</div>
+            </div>
+            <div class="app-tile" onclick="openApp('wiki')">
+              <div class="app-icon">🤖</div>
+              <div class="app-name">WikiFidia</div>
+            </div>
+          </div>
+
+          <div id="app-map" class="app-content">
+            <button class="back-to-home" onclick="backToAppGrid()">
+              ⬅ Quay lại
+            </button>
+            <div class="map-btn-list">
+              <button onclick="goTo('home.html')">🏠 Nhà của bạn</button>
+              <button onclick="goTo('clothes.html')">👕 Clothing Store</button>
+              <button onclick="goTo('super2.html')">🛍️ MegaValue Market</button>
+              <button onclick="goTo('farm.html')">🌾 FreshFarm</button>
+              <button onclick="goTo('drink.html')">🍋 Lemonade Stand</button>
+              <button onclick="goTo('ice.html')">🍦 Ice Cream Cart</button>
+              <button onclick="goTo('clothes.html')">👕 HiLi Fashion</button>
+              <button onclick="goTo('stock.html')">
+                📈 HiLiCorp Stock Exchange
+              </button>
+            </div>
+          </div>
+
+          <div id="app-news" class="app-content">
+            <button class="back-to-home" onclick="backToAppGrid()">
+              ⬅ Quay lại
+            </button>
+            <div class="news-card">
+              <b>☀️ Thời tiết: Nắng đẹp!</b><br />Nhu cầu nước giải khát và kem
+              có thể tăng trong ngày nóng.
+            </div>
+            <div class="news-card">
+              <b>📈 Thị trường:</b><br />Nhóm nông nghiệp tại FreshFarm đang
+              được chú ý.
+            </div>
+            <div class="news-card">
+              <b>💡 Mẹo kinh doanh:</b><br />Quan sát nhu cầu và giá cả trước
+              khi nhập hàng.
+            </div>
+          </div>
+
+          <div id="app-bank" class="app-content">
+            <button class="back-to-home" onclick="backToAppGrid()">
+              ⬅ Quay lại
+            </button>
+            <div class="bank-card" style="background: #202b67; color: white">
+              <div>SỐ DƯ TÀI KHOẢN</div>
+              <div style="font-size: 32px; color: #ffde00; margin-top: 5px">
+                <span id="bank-modal-bal">100.00</span> Fi
+              </div>
+            </div>
+          </div>
+
+          <div id="app-wiki" class="app-content">
+            <button class="back-to-home" onclick="backToAppGrid()">
+              ⬅ Quay lại
+            </button>
+            <div>
+              <b>🤖 WikiFidia:</b><br />Chào mừng đến Pixel Business World! Hãy
+              ghé thăm các cửa hàng, trò chuyện với cư dân và tìm kiếm cơ hội
+              kinh doanh.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NPC DIALOGUE WINDOW -->
+      <div id="dialog-box">
+        <div class="dialog-layout">
+          <div id="npc-portrait-wrap">
+            <canvas id="npc-portrait" width="112" height="112"></canvas>
+          </div>
+          <div class="dialog-copy">
+            <div id="dialog-title">NPC</div>
+            <div id="dialog-role"></div>
+            <div id="dialog-text"></div>
+            <div id="dialog-task" style="display: none">
+              <b>📌 NHIỆM VỤ:</b>
+              <span id="dialog-task-text">xxx</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="toast"></div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("map-canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = false;
+
+      const playerData = JSON.parse(
+        localStorage.getItem("playerData") || '{"name":"Minh","gender":"boy"}',
+      );
+      let currentDay = Number(localStorage.getItem("gameDay")) || 1;
+      let balance = Number(localStorage.getItem("playerBalance")) || 100;
+
+      document.getElementById("player-name-display").textContent =
+        playerData.name || "Player";
+
+      function updateMoney() {
+        document.getElementById("balance-display").textContent =
+          balance.toFixed(2);
+        document.getElementById("bank-modal-bal").textContent =
+          balance.toFixed(2);
+        localStorage.setItem("playerBalance", balance);
+      }
+
+      function updateDay() {
+        document.getElementById("day-counter").textContent =
+          `Ngày ${currentDay}/15`;
+        localStorage.setItem("gameDay", currentDay);
+      }
+
+      updateMoney();
+      updateDay();
+
+      const buildings = [
+        {
+          name: "HOME",
+          sub: "Nhà của bạn",
+          x: 345,
+          y: 82,
+          w: 94,
+          h: 76,
+          wall: "#f3dca6",
+          roof: "#d95b50",
+          url: "home.html",
+          dialog: "Ngôi nhà ấm cúng của bạn. Nghỉ ngơi để kết thúc ngày.",
+        },
+        {
+          name: "FRESHFARM",
+          sub: "Nông trại",
+          x: 72,
+          y: 292,
+          w: 142,
+          h: 88,
+          wall: "#e8c47d",
+          roof: "#b84b42",
+          url: "farm.html",
+          dialog: "Nông trại FreshFarm — nơi cung cấp nông sản tươi.",
+        },
+        {
+          name: "MEGAVALUE",
+          sub: "Siêu thị",
+          x: 585,
+          y: 292,
+          w: 142,
+          h: 88,
+          wall: "#e8e8ef",
+          roof: "#7652a5",
+          url: "super2.html",
+          dialog: "MegaValue Market — khám phá hàng hóa và cơ hội bán lẻ.",
+        },
+        {
+          name: "HIFILI CLOTHES",
+          sub: "Cửa hàng quần áo",
+          x: 112,
+          y: 485,
+          w: 145,
+          h: 76,
+          wall: "#eee8cb",
+          roof: "#268f83",
+          url: "clothes.html",
+          dialog: "Clothing Store — khám phá những bộ trang phục mới nhất.",
+        },
+        {
+          name: "HILICORP HQ",
+          sub: "Trụ sở tập đoàn",
+          x: 540,
+          y: 485,
+          w: 145,
+          h: 76,
+          wall: "#d8e0ef",
+          roof: "#3e58a5",
+          url: "stock.html",
+          dialog: "HiLiCorp HQ — theo dõi thị trường và tìm hiểu chứng khoán.",
+        },
+      ];
+
+      const npcs = [
+        {
+          name: "Hân",
+          role: "Khách hàng",
+          x: 300,
+          y: 220,
+          color: "#e85d75",
+          hair: "#4b2c26",
+          skin: "#f4c5a1",
+          dialog: "xxx",
+          task: "xxx",
+          path: [
+            [290, 220],
+            [470, 220],
+            [470, 420],
+            [290, 420],
+          ],
+        },
+        {
+          name: "Khang",
+          role: "Thương gia",
+          x: 500,
+          y: 430,
+          color: "#4267b2",
+          hair: "#30251f",
+          skin: "#d99b70",
+          dialog: "xxx",
+          task: "xxx",
+          path: [
+            [500, 430],
+            [700, 430],
+            [700, 235],
+            [500, 235],
+          ],
+        },
+        {
+          name: "Kminh",
+          role: "Nông dân",
+          x: 235,
+          y: 390,
+          color: "#4e9b58",
+          hair: "#38251f",
+          skin: "#f1bd91",
+          dialog: "xxx",
+          task: "xxx",
+          path: [
+            [235, 390],
+            [300, 390],
+            [300, 450],
+            [235, 450],
+          ],
+        },
+        {
+          name: "Hiệp",
+          role: "Nhân viên",
+          x: 490,
+          y: 180,
+          color: "#e5a23b",
+          hair: "#28202a",
+          skin: "#e9b18d",
+          dialog: "xxx",
+          task: "xxx",
+          path: [
+            [490, 180],
+            [560, 180],
+            [560, 240],
+            [490, 240],
+          ],
+        },
+      ];
+
+      const trees = [];
+      for (let x = 18; x < 790; x += 32) {
+        trees.push([x, 18], [x, 578]);
+      }
+      for (let y = 48; y < 570; y += 32) {
+        trees.push([18, y], [782, y]);
+      }
+
+      function rect(x, y, w, h, c) {
+        ctx.fillStyle = c;
+        ctx.fillRect(Math.round(x), Math.round(y), w, h);
+      }
+
+      function tree(x, y) {
+        rect(x + 10, y + 18, 10, 13, "#80502d");
+        rect(x + 2, y + 5, 27, 23, "#286b35");
+        rect(x + 7, y, 17, 20, "#3c9b45");
+        rect(x + 8, y + 4, 6, 6, "#74c957");
+      }
+
+      function drawPath() {
+        rect(0, 0, 800, 600, "#83c95b");
+
+        for (let i = 0; i < 800; i += 32) {
+          for (let j = 0; j < 600; j += 32) {
+            rect(i + 5, j + 9, 3, 3, "#72b94d");
+            rect(i + 22, j + 24, 3, 3, "#72b94d");
+          }
+        }
+
+        rect(310, 44, 180, 245, "#d8b77e");
+        rect(70, 270, 660, 90, "#d8b77e");
+        rect(355, 350, 90, 220, "#d8b77e");
+        rect(110, 470, 580, 65, "#d8b77e");
+
+        for (let x = 90; x < 730; x += 38) {
+          rect(x, 310, 18, 3, "#c7a16a");
+          rect(x, 330, 18, 3, "#c7a16a");
+        }
+
+        trees.forEach((t) => tree(...t));
+
+        for (let i = 0; i < 28; i++) {
+          let x = 35 + ((i * 83) % 720);
+          let y = 70 + ((i * 47) % 480);
+          if ((x > 270 && x < 500) || (y > 270 && y < 370)) continue;
+          rect(x, y, 4, 4, ["#f5e7a0", "#f3a5b5", "#fff"][i % 3]);
+        }
+      }
+
+      function drawBuilding(b) {
+        rect(b.x + 5, b.y + b.h - 2, b.w, 12, "#0003");
+        rect(b.x, b.y + 20, b.w, b.h - 20, b.wall);
+        rect(b.x - 5, b.y, b.w + 10, 25, b.roof);
+
+        rect(b.x + 12, b.y + 34, 22, 20, "#8ed5e8");
+        rect(b.x + b.w - 34, b.y + 34, 22, 20, "#8ed5e8");
+        rect(b.x + 12, b.y + 34, 22, 3, "#fff");
+        rect(b.x + b.w - 34, b.y + 34, 22, 3, "#fff");
+
+        rect(b.x + b.w / 2 - 11, b.y + b.h - 28, 22, 26, "#80502d");
+        rect(b.x + b.w / 2 + 5, b.y + b.h - 16, 3, 3, "#ffdc62");
+
+        // Tự căn bảng hiệu theo độ dài tên cửa hàng
+        ctx.font = '8px "Press Start 2P"';
+        const signWidth = Math.min(
+          150,
+          Math.max(98, ctx.measureText(b.name).width + 14),
+        );
+        const signX = b.x + b.w / 2 - signWidth / 2;
+
+        ctx.fillStyle = "#fff8dc";
+        ctx.fillRect(signX, b.y - 17, signWidth, 17);
+
+        ctx.strokeStyle = "#243047";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(signX, b.y - 17, signWidth, 17);
+
+        ctx.fillStyle = "#18202b";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText(b.name, b.x + b.w / 2, b.y - 5);
+      }
+
+      function drawPerson(n) {
+        const x = Math.round(n.x);
+        const y = Math.round(n.y);
+
+        rect(x + 3, y + 23, 16, 5, "#0003");
+        rect(x + 5, y + 15, 12, 12, n.color);
+        rect(x + 4, y + 25, 5, 7, "#39435b");
+        rect(x + 13, y + 25, 5, 7, "#39435b");
+
+        rect(x + 4, y + 3, 14, 13, n.skin);
+        rect(x + 3, y + 1, 16, 6, n.hair);
+        rect(x + 2, y + 5, 4, 8, n.hair);
+        rect(x + 15, y + 5, 4, 7, n.hair);
+
+        rect(x + 7, y + 8, 2, 2, "#20202a");
+        rect(x + 14, y + 8, 2, 2, "#20202a");
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "15px VT323";
+        ctx.textAlign = "center";
+        ctx.fillText(n.name, x + 11, y - 5);
+      }
+
+      function moveNPCs() {
+        for (const n of npcs) {
+          const target = n.path[n.target || 0];
+          const dx = target[0] - n.x;
+          const dy = target[1] - n.y;
+          const d = Math.hypot(dx, dy);
+
+          if (d < 1.5) {
+            n.target = ((n.target || 0) + 1) % n.path.length;
+            continue;
+          }
+
+          const speed = 0.48;
+          n.x += (dx / d) * speed;
+          n.y += (dy / d) * speed;
+        }
+      }
+
+      function draw() {
+        drawPath();
+        buildings.forEach(drawBuilding);
+        npcs.forEach(drawPerson);
+        requestAnimationFrame(draw);
+      }
+
+      draw();
+      setInterval(moveNPCs, 30);
+
+      canvas.addEventListener("click", (e) => {
+        const r = canvas.getBoundingClientRect();
+        const x = ((e.clientX - r.left) * 800) / r.width;
+        const y = ((e.clientY - r.top) * 600) / r.height;
+
+        for (const b of buildings) {
+          if (
+            x >= b.x - 5 &&
+            x <= b.x + b.w + 5 &&
+            y >= b.y - 18 &&
+            y <= b.y + b.h
+          ) {
+            showDialog(b.name, b.dialog, () => (location.href = b.url));
+            return;
+          }
+        }
+
+        for (const n of npcs) {
+          if (x >= n.x - 5 && x <= n.x + 25 && y >= n.y - 8 && y <= n.y + 37) {
+            showNPCDialog(n);
+            return;
+          }
+        }
+
+        document.getElementById("dialog-box").style.display = "none";
+      });
+
+      function showDialog(title, message, action) {
+        document.getElementById("dialog-title").textContent = title;
+        document.getElementById("dialog-role").textContent = "";
+        document.getElementById("dialog-text").textContent = message;
+        document.getElementById("npc-portrait-wrap").style.display = "none";
+        document.getElementById("dialog-task").style.display = "none";
+
+        const box = document.getElementById("dialog-box");
+        box.style.display = "block";
+
+        if (action) {
+          box.style.cursor = "pointer";
+          box.onclick = action;
+        } else {
+          box.onclick = null;
+          box.style.cursor = "default";
+        }
+      }
+
+      // Vẽ chân dung pixel phóng to của NPC khi người chơi click vào
+      function drawNpcPortrait(n) {
+        const pc = document.getElementById("npc-portrait");
+        const pctx = pc.getContext("2d");
+
+        pctx.imageSmoothingEnabled = false;
+        pctx.clearRect(0, 0, 112, 112);
+
+        const px = (x, y, w, h, c) => {
+          pctx.fillStyle = c;
+          pctx.fillRect(x, y, w, h);
+        };
+
+        px(0, 0, 112, 112, "#dce8f5");
+        px(13, 13, 86, 86, "#b9d2e8");
+
+        // Vai và thân áo
+        px(25, 68, 62, 44, n.color);
+        px(17, 96, 78, 16, n.color);
+
+        // Khuôn mặt và tóc
+        px(32, 28, 48, 48, n.skin);
+        px(29, 20, 54, 25, n.hair);
+        px(24, 29, 10, 39, n.hair);
+        px(78, 29, 10, 39, n.hair);
+
+        // Mắt
+        px(35, 46, 7, 7, "#20202a");
+        px(70, 46, 7, 7, "#20202a");
+
+        // Mũi và miệng
+        px(51, 61, 10, 4, "#9d5550");
+        px(47, 75, 19, 6, "#f0c4a4");
+
+        // Cổ áo
+        px(27, 100, 58, 12, "#26366e");
+      }
+
+      function showNPCDialog(n) {
+        document.getElementById("dialog-title").textContent = n.name;
+        document.getElementById("dialog-role").textContent = n.role;
+        document.getElementById("dialog-text").textContent = n.dialog || "xxx";
+        document.getElementById("dialog-task-text").textContent =
+          n.task || "xxx";
+
+        document.getElementById("npc-portrait-wrap").style.display = "flex";
+        document.getElementById("dialog-task").style.display = "block";
+
+        drawNpcPortrait(n);
+
+        const box = document.getElementById("dialog-box");
+        box.style.display = "block";
+        box.style.cursor = "default";
+        box.onclick = null;
+      }
+
+      function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.style.display = "block";
+
+        clearTimeout(window.toastTimer);
+        window.toastTimer = setTimeout(() => (t.style.display = "none"), 2600);
+      }
+
+      function nextDay() {
+        if (currentDay < 15) {
+          currentDay++;
+          updateDay();
+          showToast(
+            `Đã chuyển sang ngày ${currentDay}! Chúc bạn kinh doanh thuận lợi.`,
+          );
+        } else {
+          showToast("Đã kết thúc vòng 1!");
+        }
+      }
+
+      function closeMorningPopup() {
+        document.getElementById("morning-popup").style.display = "none";
+      }
+
+      function togglePhone() {
+        const m = document.getElementById("phone-modal");
+        m.style.display = m.style.display === "flex" ? "none" : "flex";
+        backToAppGrid();
+      }
+
+      function openApp(name) {
+        document.getElementById("app-grid").style.display = "none";
+        document
+          .querySelectorAll(".app-content")
+          .forEach((x) => (x.style.display = "none"));
+        document.getElementById("app-" + name).style.display = "flex";
+        document.getElementById("phone-title").textContent = name.toUpperCase();
+      }
+
+      function backToAppGrid() {
+        document
+          .querySelectorAll(".app-content")
+          .forEach((x) => (x.style.display = "none"));
+        document.getElementById("app-grid").style.display = "grid";
+        document.getElementById("phone-title").textContent = "POCKET PHONE";
+      }
+
+      function goTo(url) {
+        location.href = url;
+      }
+
+      function restAtHome() {
+        location.href = "home.html";
+      }
+
+      window.addEventListener("keydown", (e) => {
+        if (
+          e.code === "Space" &&
+          !["BUTTON"].includes(document.activeElement.tagName)
+        ) {
+          e.preventDefault();
+          restAtHome();
+        }
+
+        if (e.key === "Escape") {
+          document.getElementById("phone-modal").style.display = "none";
+          document.getElementById("dialog-box").style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>

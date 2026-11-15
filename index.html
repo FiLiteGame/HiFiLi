@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixel Adventure - Start</title>
+    <!-- Nhúng font chữ Pixel hỗ trợ tiếng Việt -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        user-select: none;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #1a1c2c;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: "VT323", monospace;
+        overflow: hidden;
+      }
+
+      /* Khung màn hình chính của game (Tỷ lệ 4:3 chuẩn GBA/Retro) */
+      #game-container {
+        position: relative;
+        width: 800px;
+        height: 600px;
+        border: 8px solid #333c57;
+        box-shadow:
+          0 0 0 4px #111,
+          0 20px 50px rgba(0, 0, 0, 0.8);
+        background-color: #567d46;
+        overflow: hidden;
+      }
+
+      /* Canvas vẽ nền bản đồ thành phố pixel */
+      #bg-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+        z-index: 1;
+      }
+
+      /* Lớp phủ giao diện UI */
+      .ui-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      /* Khung hộp thoại kiểu Pokémon / RPG cổ điển */
+      .pixel-box {
+        background-color: #f8f8f8;
+        border: 4px solid #282828;
+        box-shadow:
+          inset 0 0 0 4px #a8a8a8,
+          0 8px 0 rgba(0, 0, 0, 0.4);
+        padding: 24px 36px;
+        text-align: center;
+        color: #282828;
+      }
+
+      /* Tiêu đề Game */
+      .game-title {
+        font-size: 76px;
+        color: #ffde00;
+        text-shadow:
+          4px 4px 0 #3b4cca,
+          -2px -2px 0 #3b4cca,
+          2px -2px 0 #3b4cca,
+          -2px 2px 0 #3b4cca,
+          0 8px 0 #1d266b;
+        margin-bottom: 40px;
+        letter-spacing: 3px;
+        animation: floatTitle 2s ease-in-out infinite;
+      }
+
+      @keyframes floatTitle {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+
+      /* Nút bấm phong cách Pixel */
+      .pixel-btn {
+        font-family: "VT323", monospace;
+        font-size: 36px;
+        padding: 10px 40px;
+        background-color: #ff5959;
+        color: #fff;
+        border: 4px solid #282828;
+        box-shadow:
+          inset -4px -4px 0 #b82525,
+          0 4px 0 #282828;
+        cursor: pointer;
+        transition: transform 0.05s;
+        text-transform: uppercase;
+      }
+
+      .pixel-btn:hover {
+        background-color: #ff7373;
+      }
+
+      .pixel-btn:active {
+        transform: translateY(4px);
+        box-shadow:
+          inset -2px -2px 0 #b82525,
+          0 0 0 #282828;
+      }
+
+      .btn-start {
+        background-color: #4caf50;
+        box-shadow:
+          inset -4px -4px 0 #2e7d32,
+          0 4px 0 #282828;
+        margin-top: 20px;
+      }
+
+      .btn-start:hover {
+        background-color: #66bb6a;
+      }
+
+      /* Màn hình chọn nhân vật (Ẩn mặc định) */
+      #char-select-screen {
+        display: none;
+        background-color: rgba(
+          0,
+          0,
+          0,
+          0.55
+        ); /* Làm tối nhẹ nền thành phố phía sau */
+      }
+
+      .select-card-container {
+        display: flex;
+        gap: 30px;
+        margin: 20px 0;
+        justify-content: center;
+      }
+
+      .char-card {
+        width: 150px;
+        padding: 15px;
+        background-color: #e8e8e8;
+        border: 4px solid #787878;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.1s;
+      }
+
+      .char-card:hover {
+        background-color: #fff;
+      }
+
+      .char-card.selected {
+        background-color: #fff9c4;
+        border-color: #ff5959;
+        box-shadow: 0 0 0 3px #ff5959;
+        transform: translateY(-4px);
+      }
+
+      .char-canvas {
+        width: 96px;
+        height: 96px;
+        image-rendering: pixelated;
+        margin-bottom: 10px;
+      }
+
+      .char-label {
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      /* Ô nhập tên nhân vật */
+      .input-group {
+        margin: 15px 0;
+      }
+
+      .input-group label {
+        display: block;
+        font-size: 26px;
+        margin-bottom: 6px;
+      }
+
+      #player-name {
+        font-family: "VT323", monospace;
+        font-size: 30px;
+        padding: 6px 14px;
+        width: 280px;
+        text-align: center;
+        border: 4px solid #282828;
+        background-color: #fff;
+        outline: none;
+      }
+
+      #player-name:focus {
+        background-color: #e3f2fd;
+      }
+
+      .error-msg {
+        color: #d32f2f;
+        font-size: 22px;
+        height: 24px;
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- Nền thành phố pixel -->
+      <canvas id="bg-canvas" width="400" height="300"></canvas>
+
+      <!-- MÀN HÌNH 1: START SCREEN -->
+      <div id="title-screen" class="ui-layer">
+        <div class="game-title">HiFiLi</div>
+        <div class="pixel-box">
+          <p style="font-size: 28px; margin: 0 0 20px 0">
+            Welcome to HiFiLi Town
+          </p>
+          <button id="btn-play" class="pixel-btn">▶ PLAY</button>
+        </div>
+      </div>
+
+      <!-- MÀN HÌNH 2: CHỌN NHÂN VẬT & ĐẶT TÊN -->
+      <div id="char-select-screen" class="ui-layer">
+        <div class="pixel-box" style="width: 520px">
+          <div
+            style="
+              font-size: 36px;
+              border-bottom: 3px dashed #999;
+              padding-bottom: 8px;
+            "
+          >
+            TẠO NHÂN VẬT CỦA BẠN
+          </div>
+
+          <!-- Chọn Nam / Nữ -->
+          <div class="select-card-container">
+            <div
+              class="char-card selected"
+              data-gender="boy"
+              onclick="selectGender('boy')"
+            >
+              <canvas
+                id="canvas-boy"
+                class="char-canvas"
+                width="16"
+                height="16"
+              ></canvas>
+              <span class="char-label" style="color: #1976d2">NAM</span>
+            </div>
+
+            <div
+              class="char-card"
+              data-gender="girl"
+              onclick="selectGender('girl')"
+            >
+              <canvas
+                id="canvas-girl"
+                class="char-canvas"
+                width="16"
+                height="16"
+              ></canvas>
+              <span class="char-label" style="color: #d81b60">NỮ</span>
+            </div>
+          </div>
+
+          <!-- Nhập tên -->
+          <div class="input-group">
+            <label for="player-name">NHẬP TÊN NHÂN VẬT:</label>
+            <input
+              type="text"
+              id="player-name"
+              maxlength="12"
+              placeholder="Ví dụ: Red, Ash..."
+              autocomplete="off"
+            />
+            <div id="error-text" class="error-msg"></div>
+          </div>
+
+          <button id="btn-start-game" class="pixel-btn btn-start">
+            START ADVENTURE ➔
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ==========================================
+      // 1. VẼ NỀN THÀNH PHỐ PIXEL (BACKGROUND MAP)
+      // ==========================================
+      const bgCanvas = document.getElementById("bg-canvas");
+      const bgCtx = bgCanvas.getContext("2d");
+      bgCtx.imageSmoothingEnabled = false;
+
+      // Hàm vẽ ngôi nhà pixel nhỏ
+      function drawPixelHouse(ctx, x, y, roofColor, wallColor) {
+        // Bóng đổ
+        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        ctx.fillRect(x + 2, y + 36, 44, 6);
+        // Tường nhà
+        ctx.fillStyle = wallColor;
+        ctx.fillRect(x + 4, y + 16, 36, 22);
+        // Mái nhà
+        ctx.fillStyle = roofColor;
+        ctx.fillRect(x, y + 8, 44, 10);
+        ctx.fillRect(x + 4, y + 4, 36, 4);
+        ctx.fillRect(x + 8, y, 28, 4);
+        // Cửa chính
+        ctx.fillStyle = "#5c3a21";
+        ctx.fillRect(x + 18, y + 24, 8, 14);
+        // Cửa sổ
+        ctx.fillStyle = "#8be9fd";
+        ctx.fillRect(x + 8, y + 22, 6, 6);
+        ctx.fillRect(x + 30, y + 22, 6, 6);
+      }
+
+      // Hàm vẽ cây pixel
+      function drawPixelTree(ctx, x, y) {
+        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        ctx.fillRect(x + 3, y + 20, 14, 4);
+        // Thân cây
+        ctx.fillStyle = "#6d4c41";
+        ctx.fillRect(x + 7, y + 14, 6, 8);
+        // Tán lá
+        ctx.fillStyle = "#2e7d32";
+        ctx.fillRect(x + 2, y + 4, 16, 12);
+        ctx.fillStyle = "#4caf50";
+        ctx.fillRect(x + 4, y + 2, 12, 10);
+      }
+
+      let cloudX = 0;
+      function drawCityBackground() {
+        // Nền cỏ xanh
+        bgCtx.fillStyle = "#7ec850";
+        bgCtx.fillRect(0, 0, 400, 300);
+
+        // Họa tiết cỏ lấm tấm
+        bgCtx.fillStyle = "#6ab04c";
+        for (let i = 0; i < 400; i += 32) {
+          for (let j = 0; j < 300; j += 32) {
+            bgCtx.fillRect(i + 8, j + 10, 4, 2);
+            bgCtx.fillRect(i + 20, j + 24, 4, 2);
+          }
+        }
+
+        // Con đường đất lát gạch trong thành phố
+        bgCtx.fillStyle = "#e0c088";
+        bgCtx.fillRect(0, 140, 400, 36); // Đường ngang
+        bgCtx.fillRect(180, 0, 40, 300); // Đường dọc
+
+        // Viền đường
+        bgCtx.fillStyle = "#bfa06a";
+        bgCtx.fillRect(0, 138, 400, 2);
+        bgCtx.fillRect(0, 176, 400, 2);
+
+        // Vẽ các ngôi nhà thành phố
+        drawPixelHouse(bgCtx, 40, 60, "#d9534f", "#f5f5dc"); // Nhà mái đỏ 1
+        drawPixelHouse(bgCtx, 110, 60, "#428bca", "#fff8dc"); // Nhà mái xanh
+        drawPixelHouse(bgCtx, 250, 50, "#d9534f", "#f5f5dc"); // Nhà mái đỏ 2
+        drawPixelHouse(bgCtx, 310, 70, "#f0ad4e", "#fff8dc"); // Nhà mái vàng
+        drawPixelHouse(bgCtx, 50, 200, "#5cb85c", "#f5f5dc"); // Nhà mái lục
+        drawPixelHouse(bgCtx, 270, 200, "#d9534f", "#fff8dc"); // Nhà mái đỏ 3
+
+        // Hàng cây trang trí xung quanh
+        const treeCoords = [
+          [10, 10],
+          [80, 10],
+          [150, 10],
+          [230, 10],
+          [360, 10],
+          [10, 100],
+          [365, 110],
+          [15, 250],
+          [130, 230],
+          [235, 240],
+          [355, 245],
+        ];
+        treeCoords.forEach((pos) => drawPixelTree(bgCtx, pos[0], pos[1]));
+
+        // Bóng mây trôi nhẹ trên mặt đất tạo cảm giác sống động
+        cloudX += 0.2;
+        if (cloudX > 450) cloudX = -100;
+        bgCtx.fillStyle = "rgba(255, 255, 255, 0.25)";
+        bgCtx.fillRect(cloudX, 40, 70, 20);
+        bgCtx.fillRect(cloudX + 15, 32, 40, 35);
+      }
+
+      function animateBg() {
+        drawCityBackground();
+        requestAnimationFrame(animateBg);
+      }
+      animateBg();
+
+      // ==========================================
+      // 2. VẼ SPRITE NHÂN VẬT NAM / NỮ (16x16 PIXEL)
+      // ==========================================
+      // Bảng màu: 0: trong suốt, 1: đen/tóc, 2: da, 3: mũ/áo đỏ, 4: áo xanh/váy hồng, 5: quần xanh
+      const boySprite = [
+        [0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0],
+        [0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0], // Lưỡi trai mũ đỏ
+        [0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 2, 2, 1, 2, 1, 2, 0, 0, 0, 0, 0], // Mắt
+        [0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0], // Áo khoác đỏ
+        [0, 0, 0, 2, 3, 3, 3, 1, 1, 3, 3, 3, 2, 0, 0, 0],
+        [0, 0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 0, 0, 0],
+        [0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0], // Quần jean xanh
+        [0, 0, 0, 0, 0, 5, 5, 0, 0, 5, 5, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 5, 5, 0, 0, 5, 5, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0], // Giày
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      ];
+
+      const girlSprite = [
+        [0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0], // Mũ hồng
+        [0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0],
+        [0, 0, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0], // Tóc nâu (6)
+        [0, 0, 0, 6, 6, 2, 2, 2, 2, 2, 2, 6, 6, 0, 0, 0],
+        [0, 0, 0, 6, 2, 2, 1, 2, 2, 1, 2, 2, 6, 0, 0, 0], // Mắt
+        [0, 0, 0, 6, 2, 2, 2, 2, 2, 2, 2, 2, 6, 0, 0, 0],
+        [0, 0, 0, 6, 0, 0, 2, 2, 2, 2, 0, 0, 6, 0, 0, 0],
+        [0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0], // Áo hồng
+        [0, 0, 0, 2, 4, 4, 4, 4, 4, 4, 4, 4, 2, 0, 0, 0],
+        [0, 0, 0, 2, 4, 4, 4, 4, 4, 4, 4, 4, 2, 0, 0, 0],
+        [0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0], // Chân váy xanh
+        [0, 0, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 4, 4, 4, 0, 0, 4, 4, 4, 0, 0, 0, 0], // Giày hồng
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      ];
+
+      const palette = {
+        1: "#1a1c2c", // Đen
+        2: "#ffccaa", // Da
+        3: "#e53935", // Đỏ
+        4: "#ec407a", // Hồng
+        5: "#1e88e5", // Xanh dương
+        6: "#6d4c41", // Tóc nâu
+      };
+
+      function drawSprite(canvasId, spriteMatrix, bounceOffset = 0) {
+        const c = document.getElementById(canvasId);
+        const ctx = c.getContext("2d");
+        ctx.clearRect(0, 0, 16, 16);
+
+        for (let r = 0; r < 16; r++) {
+          for (let col = 0; col < 16; col++) {
+            const colorCode = spriteMatrix[r][col];
+            if (colorCode !== 0) {
+              ctx.fillStyle = palette[colorCode];
+              ctx.fillRect(col, r + bounceOffset, 1, 1);
+            }
+          }
+        }
+      }
+
+      // Hiệu ứng nhân vật đang chọn nhún nhảy nhẹ
+      let selectedGender = "boy";
+      let frameCount = 0;
+      function animateCharacters() {
+        frameCount++;
+        const bounce = Math.floor(frameCount / 20) % 2; // Nhún 1 pixel mỗi 20 frame
+        drawSprite(
+          "canvas-boy",
+          boySprite,
+          selectedGender === "boy" ? bounce : 0,
+        );
+        drawSprite(
+          "canvas-girl",
+          girlSprite,
+          selectedGender === "girl" ? bounce : 0,
+        );
+        requestAnimationFrame(animateCharacters);
+      }
+      animateCharacters();
+
+      // ==========================================
+      // 3. XỬ LÝ TƯƠNG TÁC CHUYỂN MÀN HÌNH & LƯU DỮ LIỆU
+      // ==========================================
+      const titleScreen = document.getElementById("title-screen");
+      const charSelectScreen = document.getElementById("char-select-screen");
+      const btnPlay = document.getElementById("btn-play");
+      const btnStartGame = document.getElementById("btn-start-game");
+      const nameInput = document.getElementById("player-name");
+      const errorText = document.getElementById("error-text");
+
+      // Bấm PLAY -> Hiện bảng tạo nhân vật
+      btnPlay.addEventListener("click", () => {
+        titleScreen.style.display = "none";
+        charSelectScreen.style.display = "flex";
+        nameInput.focus();
+      });
+
+      // Chọn giới tính Nam / Nữ
+      window.selectGender = function (gender) {
+        selectedGender = gender;
+        document.querySelectorAll(".char-card").forEach((card) => {
+          card.classList.remove("selected");
+          if (card.dataset.gender === gender) {
+            card.classList.add("selected");
+          }
+        });
+      };
+
+      // Bấm START -> Kiểm tra tên, lưu thông tin và chuyển sang map.html
+      btnStartGame.addEventListener("click", () => {
+        const playerName = nameInput.value.trim();
+
+        if (!playerName) {
+          errorText.textContent = "⚠ Bạn chưa nhập tên nhân vật!";
+          nameInput.focus();
+          return;
+        }
+
+        // Lưu thông tin nhân vật vào localStorage để trang map.html sử dụng
+        const playerData = {
+          name: playerName,
+          gender: selectedGender,
+        };
+        localStorage.setItem("playerData", JSON.stringify(playerData));
+
+        // Chuyển sang file map.html
+        window.location.href = "map.html";
+      });
+
+      // Cho phép nhấn phím Enter trong ô nhập tên để bắt đầu luôn
+      nameInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          btnStartGame.click();
+        }
+      });
+    </script>
+  </body>
+</html>
