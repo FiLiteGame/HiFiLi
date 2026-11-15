@@ -328,12 +328,12 @@
       }
       updateMiniInventory();
 
-      // Hàm tìm kiếm khóa nguyên liệu an toàn (hỗ trợ cả từ khóa không dấu/có dấu)
-      function findKey(keywordList) {
+      // Hàm tìm kiếm khóa nguyên liệu chính xác theo tên chuẩn từ Siêu thị
+      function findKey(exactNameKeywords) {
         for (let k of Object.keys(inventory)) {
           const lowerK = k.toLowerCase();
-          for (let word of keywordList) {
-            if (lowerK.includes(word.toLowerCase())) {
+          for (let kw of exactNameKeywords) {
+            if (lowerK.includes(kw.toLowerCase()) && inventory[k] > 0) {
               return k;
             }
           }
@@ -341,28 +341,29 @@
         return null;
       }
 
-      // 2. PHA CHẾ TRONG BẾP (Có báo lỗi chi tiết nguyên liệu thiếu)
+      // 2. PHA CHẾ TRONG BẾP
       function craftDrink(type, amount) {
-        const chanhKey = findKey(["chanh"]);
-        const duongKey = findKey(["đường", "duong"]);
-        const cocKey = findKey(["cốc", "coc"]);
-        const ongHutKey = findKey(["ống hút", "ong hut"]);
-        const matOngKey = findKey(["mật ong", "mat ong"]);
+        // Khớp chính xác với tên mới trong siêu thị: "🍋 Chanh Tươi (500g)", "🧂 Đường Trắng (Gói)",...
+        const chanhKey = findKey(["chanh tươi", "chanh"]);
+        const duongKey = findKey(["đường trắng", "đường"]);
+        const cocKey = findKey(["cốc giấy", "cốc"]);
+        const ongHutKey = findKey(["ống hút"]);
+        const matOngKey = findKey(["mật ong"]);
 
         if (type === "lemonade") {
           let missing = [];
-          if (!chanhKey || (inventory[chanhKey] || 0) < 1)
-            missing.push("Chanh (500g)");
-          if (!duongKey || (inventory[duongKey] || 0) < 1)
-            missing.push("Đường (Gói)");
-          if (!cocKey || (inventory[cocKey] || 0) < 1)
-            missing.push("Cốc Giấy (Cái)");
-          if (!ongHutKey || (inventory[ongHutKey] || 0) < 1)
-            missing.push("Ống Hút (Cái)");
+          if (!chanhKey || inventory[chanhKey] < 1)
+            missing.push("🍋 Chanh Tươi (500g)");
+          if (!duongKey || inventory[duongKey] < 1)
+            missing.push("🧂 Đường Trắng (Gói)");
+          if (!cocKey || inventory[cocKey] < 1)
+            missing.push("🥤 Cốc Giấy (Cái)");
+          if (!ongHutKey || inventory[ongHutKey] < 1)
+            missing.push("🥤 Ống Hút (Cái)");
 
           if (missing.length > 0) {
             showNotification(
-              `❌ Thiếu: ${missing.join(", ")}! Hãy kiểm tra lại kho.`,
+              `❌ Thiếu: ${missing.join(", ")}! Hãy ghé siêu thị mua.`,
             );
             return;
           }
@@ -380,18 +381,18 @@
           );
         } else if (type === "honey_lemonade") {
           let missing = [];
-          if (!chanhKey || (inventory[chanhKey] || 0) < 1)
-            missing.push("Chanh (500g)");
-          if (!matOngKey || (inventory[matOngKey] || 0) < 1)
-            missing.push("Mật Ong (Lọ)");
-          if (!cocKey || (inventory[cocKey] || 0) < 1)
-            missing.push("Cốc Giấy (Cái)");
-          if (!ongHutKey || (inventory[ongHutKey] || 0) < 1)
-            missing.push("Ống Hút (Cái)");
+          if (!chanhKey || inventory[chanhKey] < 1)
+            missing.push("🍋 Chanh Tươi (500g)");
+          if (!matOngKey || inventory[matOngKey] < 1)
+            missing.push("🍯 Mật Ong Nguyên Chất (Lọ)");
+          if (!cocKey || inventory[cocKey] < 1)
+            missing.push("🥤 Cốc Giấy (Cái)");
+          if (!ongHutKey || inventory[ongHutKey] < 1)
+            missing.push("🥤 Ống Hút (Cái)");
 
           if (missing.length > 0) {
             showNotification(
-              `❌ Thiếu: ${missing.join(", ")}! Hãy kiểm tra lại kho.`,
+              `❌ Thiếu: ${missing.join(", ")}! Hãy ghé siêu thị mua.`,
             );
             return;
           }
