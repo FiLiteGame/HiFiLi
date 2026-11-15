@@ -371,6 +371,54 @@
         display: none;
       }
 
+      /* METRO TRANSITION */
+      #metro-transition {
+        position: absolute;
+        inset: 0;
+        z-index: 100;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 18px;
+        background: #101827;
+        color: #ffdf55;
+        font-family: "Press Start 2P", monospace;
+        font-size: 16px;
+        text-align: center;
+      }
+      #metro-transition.show {
+        display: flex;
+        animation: metroFadeIn 0.35s steps(5, end);
+      }
+      @keyframes metroFadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .metro-loader {
+        width: 160px;
+        height: 8px;
+        border: 2px solid #ffdf55;
+        background: repeating-linear-gradient(
+          90deg,
+          #ffdf55 0 12px,
+          transparent 12px 20px
+        );
+        animation: metroMove 0.7s linear infinite;
+      }
+      @keyframes metroMove {
+        from {
+          background-position: 0 0;
+        }
+        to {
+          background-position: 20px 0;
+        }
+      }
+
       @media (max-width: 600px) {
         .dialog-layout {
           gap: 8px;
@@ -470,9 +518,9 @@
         </div>
         <div class="top-right-info">
           <span id="time-weather">06:58 ☀️ Nắng đẹp</span>
-          <span class="money-badge"
-            >💰 <span id="balance-display">100.00</span> Fi</span
-          >
+          <span class="money-badge">
+            💰 <span id="balance-display">100.00</span> Fi
+          </span>
           <button class="pixel-btn" onclick="nextDay()">⏩ Ngày</button>
           <button class="pixel-btn" onclick="togglePhone()">📱</button>
         </div>
@@ -491,10 +539,10 @@
       </div>
 
       <div id="morning-popup">
-        <span
-          >📰 <b>Chào buổi sáng!</b> Kiểm tra điện thoại để đọc bản tin trước
-          khi kinh doanh.</span
-        >
+        <span>
+          📰 <b>Chào buổi sáng!</b> Kiểm tra điện thoại để đọc bản tin trước khi
+          kinh doanh.
+        </span>
         <button
           onclick="
             closeMorningPopup();
@@ -559,16 +607,16 @@
               ⬅ Quay lại
             </button>
             <div class="news-card">
-              <b>☀️ Thời tiết: Nắng đẹp!</b><br />Nhu cầu nước giải khát và kem
-              có thể tăng trong ngày nóng.
+              <b>☀️ Thời tiết: Nắng đẹp!</b><br />
+              Nhu cầu nước giải khát và kem có thể tăng trong ngày nóng.
             </div>
             <div class="news-card">
-              <b>📈 Thị trường:</b><br />Nhóm nông nghiệp tại FreshFarm đang
-              được chú ý.
+              <b>📈 Thị trường:</b><br />
+              Nhóm nông nghiệp tại FreshFarm đang được chú ý.
             </div>
             <div class="news-card">
-              <b>💡 Mẹo kinh doanh:</b><br />Quan sát nhu cầu và giá cả trước
-              khi nhập hàng.
+              <b>💡 Mẹo kinh doanh:</b><br />
+              Quan sát nhu cầu và giá cả trước khi nhập hàng.
             </div>
           </div>
 
@@ -589,9 +637,9 @@
               ⬅ Quay lại
             </button>
             <div>
-              <b>🤖 WikiFidia:</b><br />Chào mừng đến Pixel Business World! Hãy
-              ghé thăm các cửa hàng, trò chuyện với cư dân và tìm kiếm cơ hội
-              kinh doanh.
+              <b>🤖 WikiFidia:</b><br />
+              Chào mừng đến Pixel Business World! Hãy ghé thăm các cửa hàng, trò
+              chuyện với cư dân và tìm kiếm cơ hội kinh doanh.
             </div>
           </div>
         </div>
@@ -616,6 +664,13 @@
       </div>
 
       <div id="toast"></div>
+
+      <!-- METRO TRANSITION SCREEN -->
+      <div id="metro-transition">
+        <div>🚇 METRO STATION</div>
+        <div>ĐANG DI CHUYỂN ĐẾN KHU VỰC MỚI...</div>
+        <div class="metro-loader"></div>
+      </div>
     </div>
 
     <script>
@@ -867,6 +922,74 @@
         ctx.fillText(b.name, b.x + b.w / 2, b.y - 5);
       }
 
+      // VẼ GA METRO Ở GIỮA NGÃ TƯ
+      function drawMetro() {
+        // Bóng đổ
+        rect(342, 278, 116, 68, "#0003");
+
+        // Nền khu vực ga
+        rect(344, 270, 112, 68, "#7b8791");
+        rect(350, 276, 100, 56, "#c4cbd0");
+
+        // Viền gạch
+        rect(350, 276, 100, 5, "#596675");
+        rect(350, 327, 100, 5, "#596675");
+        rect(350, 276, 5, 56, "#596675");
+        rect(445, 276, 5, 56, "#596675");
+
+        // Mái che ga
+        rect(354, 268, 92, 10, "#253c63");
+        rect(360, 260, 80, 9, "#4568c7");
+        rect(368, 254, 64, 7, "#253c63");
+
+        // Biển hiệu METRO
+        rect(365, 237, 70, 20, "#ffdf55");
+        ctx.strokeStyle = "#18202b";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(365, 237, 70, 20);
+
+        ctx.fillStyle = "#18202b";
+        ctx.font = '8px "Press Start 2P"';
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("METRO", 400, 247);
+
+        // Cầu thang đi xuống hầm
+        rect(372, 282, 56, 43, "#29384b");
+        rect(377, 286, 46, 35, "#111827");
+        rect(380, 290, 40, 4, "#8294a7");
+        rect(380, 297, 40, 4, "#8294a7");
+        rect(380, 304, 40, 4, "#8294a7");
+        rect(380, 311, 40, 4, "#8294a7");
+
+        // Tay vịn
+        rect(367, 282, 4, 39, "#e5e7eb");
+        rect(429, 282, 4, 39, "#e5e7eb");
+        rect(367, 280, 12, 3, "#e5e7eb");
+        rect(421, 280, 12, 3, "#e5e7eb");
+
+        // Đèn chỉ dẫn
+        rect(356, 285, 7, 7, "#57d5a2");
+        rect(437, 285, 7, 7, "#57d5a2");
+
+        // Chữ hướng dẫn
+        ctx.fillStyle = "#17213b";
+        ctx.font = "15px VT323";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText("CLICK TO ENTER", 400, 358);
+      }
+
+      // HIỆU ỨNG VÀ CHUYỂN SANG MAP 2
+      function enterMetro() {
+        const overlay = document.getElementById("metro-transition");
+        overlay.classList.add("show");
+
+        setTimeout(() => {
+          window.location.href = "map2.html";
+        }, 1100);
+      }
+
       function drawPerson(n) {
         const x = Math.round(n.x);
         const y = Math.round(n.y);
@@ -911,6 +1034,7 @@
       function draw() {
         drawPath();
         buildings.forEach(drawBuilding);
+        drawMetro();
         npcs.forEach(drawPerson);
         requestAnimationFrame(draw);
       }
@@ -922,6 +1046,12 @@
         const r = canvas.getBoundingClientRect();
         const x = ((e.clientX - r.left) * 800) / r.width;
         const y = ((e.clientY - r.top) * 600) / r.height;
+
+        // Khu vực ga metro ở chính giữa bản đồ
+        if (x >= 344 && x <= 456 && y >= 237 && y <= 360) {
+          enterMetro();
+          return;
+        }
 
         for (const b of buildings) {
           if (

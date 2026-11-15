@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixel Business World - Khu Vực Bãi Biển (Map 2)</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        user-select: none;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0d1117;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: "VT323", monospace;
+        overflow: hidden;
+      }
+
+      /* Khung màn hình game 800x600 chuẩn Retro Pixel */
+      #game-container {
+        position: relative;
+        width: 800px;
+        height: 600px;
+        border: 6px solid #111;
+        box-shadow:
+          0 0 0 4px #00bcd4,
+          0 20px 40px rgba(0, 0, 0, 0.8);
+        background-color: #7ec850;
+        overflow: hidden;
+      }
+
+      #map-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+      }
+
+      /* 1. THANH TRẠNG THÁI TRÊN CÙNG (TOP BAR) */
+      .top-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 44px;
+        background-color: #1a1c2c;
+        border-bottom: 4px solid #111;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        z-index: 15;
+        color: #fff;
+        font-size: 22px;
+      }
+
+      .top-left-info,
+      .top-right-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .pixel-badge {
+        background-color: #ffde00;
+        color: #111;
+        padding: 2px 8px;
+        border: 2px solid #111;
+        font-weight: bold;
+        font-size: 20px;
+        box-shadow: 2px 2px 0 #111;
+      }
+
+      .money-badge {
+        background-color: #4caf50;
+        color: #fff;
+        padding: 2px 8px;
+        border: 2px solid #111;
+        font-size: 20px;
+        box-shadow: 2px 2px 0 #111;
+      }
+
+      .pixel-btn-top {
+        font-family: "VT323", monospace;
+        background-color: #e74c3c;
+        color: #fff;
+        border: 2px solid #111;
+        padding: 2px 10px;
+        font-size: 20px;
+        cursor: pointer;
+        box-shadow: 2px 2px 0 #111;
+        transition: transform 0.05s;
+      }
+
+      .pixel-btn-top:active {
+        transform: translateY(2px);
+        box-shadow: 0 0 0 #111;
+      }
+
+      .phone-icon-btn {
+        background-color: #3b4cca;
+        border: 2px solid #111;
+        color: #fff;
+        font-size: 20px;
+        padding: 2px 8px;
+        cursor: pointer;
+        box-shadow: 2px 2px 0 #111;
+      }
+
+      /* 2. BẢNG CHỈ DẪN KHU VỰC GÓC TRÁI */
+      .area-box {
+        position: absolute;
+        top: 52px;
+        left: 12px;
+        background-color: rgba(26, 28, 44, 0.9);
+        border: 3px solid #111;
+        color: #fff;
+        padding: 6px 12px;
+        font-size: 20px;
+        z-index: 10;
+        box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+      }
+
+      /* 3. NÚT QUAY VỀ TRUNG TÂM THỊ TRẤN Ở ĐÁY */
+      .bottom-action-bar {
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #ffde00;
+        border: 4px solid #111;
+        box-shadow: 0 4px 0 #111;
+        padding: 6px 20px;
+        z-index: 15;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: transform 0.05s;
+      }
+
+      .bottom-action-bar:hover {
+        background-color: #ffee55;
+      }
+
+      .bottom-action-bar:active {
+        transform: translateX(-50%) translateY(4px);
+        box-shadow: 0 0 0 #111;
+      }
+
+      .rest-text {
+        font-size: 22px;
+        font-weight: bold;
+        color: #111;
+        text-transform: uppercase;
+      }
+
+      /* 4. GIAO DIỆN ĐIỆN THOẠI (MODAL) */
+      #phone-modal {
+        position: absolute;
+        top: 50px;
+        right: 20px;
+        width: 340px;
+        height: 480px;
+        background-color: #1d266b;
+        border: 6px solid #ffde00;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+        display: none;
+        flex-direction: column;
+        z-index: 30;
+        overflow: hidden;
+        color: #fff;
+      }
+
+      .phone-header {
+        background-color: #111638;
+        padding: 8px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid #ffde00;
+        font-size: 22px;
+        color: #ffde00;
+      }
+
+      .phone-close-btn {
+        background: #e74c3c;
+        color: #fff;
+        border: 2px solid #111;
+        padding: 0 6px;
+        cursor: pointer;
+        font-family: "VT323", monospace;
+        font-size: 20px;
+      }
+
+      .phone-body {
+        flex: 1;
+        padding: 12px;
+        overflow-y: auto;
+        background-color: #f0f3f8;
+        color: #111;
+        font-size: 20px;
+      }
+
+      .map-btn-list button {
+        display: block;
+        width: 100%;
+        background: #fff;
+        border: 2px solid #111;
+        padding: 8px;
+        margin-bottom: 8px;
+        box-shadow: 2px 2px 0 #111;
+        text-align: left;
+        cursor: pointer;
+        font-family: "VT323", monospace;
+        font-size: 20px;
+      }
+
+      .map-btn-list button:hover {
+        background: #3b4cca;
+        color: #fff;
+      }
+
+      /* 5. HỘI THOẠI NPC CHUẨN POKÉMON */
+      #dialog-box {
+        position: absolute;
+        bottom: 65px;
+        left: 20px;
+        right: 20px;
+        height: 105px;
+        background: #f8f8f8;
+        border: 4px solid #1d266b;
+        box-shadow:
+          inset 0 0 0 2px #fff,
+          0 6px 0 rgba(0, 0, 0, 0.5);
+        padding: 10px 16px;
+        display: none;
+        z-index: 25;
+        color: #111;
+        font-size: 24px;
+      }
+      #dialog-title {
+        font-weight: bold;
+        color: #1d266b;
+        font-size: 22px;
+        margin-bottom: 4px;
+      }
+      .dialog-arrow {
+        position: absolute;
+        bottom: 8px;
+        right: 14px;
+        font-size: 22px;
+        color: #1d266b;
+        animation: bounceArrow 0.6s infinite alternate;
+      }
+      @keyframes bounceArrow {
+        0% {
+          transform: translateY(0);
+        }
+        100% {
+          transform: translateY(4px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- THANH TRẠNG THÁI TRÊN CÙNG -->
+      <div class="top-bar">
+        <div class="top-left-info">
+          <span
+            id="player-name-display"
+            style="font-weight: bold; color: #ffde00"
+            >Minh</span
+          >
+          <span class="pixel-badge" id="day-counter">Ngày 1/15</span>
+        </div>
+        <div class="top-right-info">
+          <span>🌊 Khu Ven Biển</span>
+          <span class="money-badge"
+            >💰 $<span id="balance-display">15.00</span></span
+          >
+          <button class="pixel-btn-top" onclick="goTo('map.html')">
+            ⬅ Trung Tâm
+          </button>
+          <button class="phone-icon-btn" onclick="togglePhone()">📱</button>
+        </div>
+      </div>
+
+      <!-- BẢNG CHỈ DẪN KHU VỰC -->
+      <div class="area-box">
+        📍 <b>Khu Phố Biển & Học Viện</b> — Bấm vào các công trình để tham quan!
+      </div>
+
+      <!-- BẢN ĐỒ CANVAS (PIXEL ART) -->
+      <canvas id="map-canvas" width="800" height="600"></canvas>
+
+      <!-- NÚT QUAY VỀ BẢN ĐỒ 1 -->
+      <div class="bottom-action-bar" onclick="goTo('map.html')">
+        <span>🏙️</span>
+        <span class="rest-text">Quay Lại Khu Trung Tâm (Map 1)</span>
+      </div>
+
+      <!-- GIAO DIỆN ĐIỆN THOẠI ĐIỀU HƯỚNG NHANH -->
+      <div id="phone-modal">
+        <div class="phone-header">
+          <span>BẢN ĐỒ DỊCH CHUYỂN</span>
+          <button class="phone-close-btn" onclick="togglePhone()">✕</button>
+        </div>
+        <div class="phone-body">
+          <p style="margin-top: 0; font-weight: bold; color: #1d266b">
+            ĐỊA ĐIỂM KHU VỰC 2:
+          </p>
+          <div class="map-btn-list">
+            <button onclick="goTo('beach.html')">
+              🏖️ Bãi Biển Nắng Vàng (beach.html)
+            </button>
+            <button onclick="goTo('hair.html')">
+              💇‍♀️ Tiệm Làm Tóc Hair Salon (hair.html)
+            </button>
+            <button onclick="goTo('school.html')">
+              🏫 Trường Học Thị Trấn (school.html)
+            </button>
+            <hr style="border: 1px dashed #999; margin: 10px 0" />
+            <button onclick="goTo('map.html')" style="background: #fff9c4">
+              🏙️ Về Trung Tâm Thị Trấn (map.html)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- HỘP THOẠI NPC -->
+      <div id="dialog-box">
+        <div id="dialog-title">NPC</div>
+        <div id="dialog-text">...</div>
+        <div class="dialog-arrow">▼</div>
+      </div>
+    </div>
+
+    <script>
+      // 1. ĐỌC DỮ LIỆU TỪ LOCALSTORAGE
+      const playerData = JSON.parse(localStorage.getItem("playerData")) || {
+        name: "Minh",
+        gender: "boy",
+      };
+      document.getElementById("player-name-display").textContent =
+        playerData.name;
+
+      let currentDay = parseInt(localStorage.getItem("gameDay")) || 1;
+      let balance = parseFloat(localStorage.getItem("playerBalance")) || 15.0;
+
+      document.getElementById("day-counter").textContent =
+        `Ngày ${currentDay}/15`;
+      document.getElementById("balance-display").textContent =
+        balance.toFixed(2);
+
+      function togglePhone() {
+        const modal = document.getElementById("phone-modal");
+        modal.style.display = modal.style.display === "flex" ? "none" : "flex";
+      }
+
+      function goTo(url) {
+        window.location.href = url;
+      }
+
+      // 2. VẼ BẢN ĐỒ KHU VỰC 2 (BÃI BIỂN, TRƯỜNG HỌC, HAIR SALON)
+      const canvas = document.getElementById("map-canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = false;
+
+      // Danh sách 3 địa điểm chính theo yêu cầu
+      const buildings = [
+        {
+          name: "School (Trường Học)",
+          x: 70,
+          y: 110,
+          w: 170,
+          h: 95,
+          color: "#fff8dc",
+          roof: "#d9534f",
+          url: "school.html",
+          icon: "🏫",
+        },
+        {
+          name: "Hair Salon",
+          x: 340,
+          y: 120,
+          w: 140,
+          h: 85,
+          color: "#fce4ec",
+          roof: "#ec407a",
+          url: "hair.html",
+          icon: "💇‍♀️",
+        },
+        {
+          name: "Bãi Biển (Beach)",
+          x: 560,
+          y: 230,
+          w: 190,
+          h: 250,
+          color: "#f4d03f",
+          roof: "#00bcd4",
+          url: "beach.html",
+          isBeachZone: true,
+        },
+      ];
+
+      // Danh sách NPC đi dạo xung quanh
+      const npcs = [
+        {
+          name: "Học Sinh Năng Động",
+          x: 140,
+          y: 280,
+          vx: 0.6,
+          minX: 80,
+          maxX: 280,
+          shirtColor: "#3498db",
+          hairColor: "#111",
+          text: "Chào cậu! Tớ đang chuẩn bị vào lớp ở School. Học thêm kỹ năng kinh doanh ở trường sẽ giúp kiếm tiền nhanh hơn đấy!",
+        },
+        {
+          name: "Nhà Tạo Mẫu Tóc",
+          x: 380,
+          y: 260,
+          vx: -0.5,
+          minX: 310,
+          maxX: 490,
+          shirtColor: "#e91e63",
+          hairColor: "#f1c40f",
+          text: "Muốn thay đổi kiểu tóc mới thật sành điệu không? Ghé vào Hair Salon của tôi ngay phía sau nhé!",
+        },
+        {
+          name: "Du Khách Tắm Biển",
+          x: 590,
+          y: 360,
+          vx: 0.4,
+          minX: 550,
+          maxX: 640,
+          shirtColor: "#ff9800",
+          hairColor: "#6d4c41",
+          text: "Nước biển hôm nay trong xanh và mát rượi! Bấm vào khu vực Bãi Biển để dạo chơi và thư giãn nhé.",
+        },
+      ];
+
+      let waveOffset = 0;
+
+      function drawMap2() {
+        // 1. Nền cỏ xanh phía đất liền (Bên trái)
+        ctx.fillStyle = "#7ec850";
+        ctx.fillRect(0, 0, 540, 600);
+
+        // Họa tiết cỏ pixel
+        ctx.fillStyle = "#6ab04c";
+        for (let i = 0; i < 520; i += 32) {
+          for (let j = 40; j < 600; j += 32) {
+            ctx.fillRect(i + 8, j + 12, 4, 3);
+            ctx.fillRect(i + 20, j + 24, 4, 3);
+          }
+        }
+
+        // 2. Bãi cát vàng (Giữa)
+        ctx.fillStyle = "#f7dc6f";
+        ctx.fillRect(520, 0, 140, 600);
+        // Chấm hạt cát
+        ctx.fillStyle = "#d4ac0d";
+        for (let i = 530; i < 650; i += 24) {
+          for (let j = 50; j < 600; j += 28) {
+            ctx.fillRect(i, j, 3, 3);
+          }
+        }
+
+        // 3. Nước biển xanh (Bên phải) + Sóng vỗ
+        waveOffset += 0.04;
+        const waveShift = Math.sin(waveOffset) * 6;
+
+        ctx.fillStyle = "#29b6f6";
+        ctx.fillRect(650 + waveShift, 0, 160, 600);
+
+        // Bọt sóng trắng ven bờ
+        ctx.fillStyle = "#e1f5fe";
+        ctx.fillRect(646 + waveShift, 0, 8, 600);
+
+        // Sóng biển lăn tăn ngoài khơi
+        ctx.fillStyle = "#81d4fa";
+        for (let y = 60; y < 580; y += 50) {
+          ctx.fillRect(690 + waveShift, y, 24, 4);
+          ctx.fillRect(730 - waveShift, y + 25, 20, 4);
+        }
+
+        // 4. Đường đi lát gạch nối các công trình
+        ctx.fillStyle = "#e2c08d";
+        ctx.fillRect(60, 250, 460, 60); // Đường ngang chính
+        ctx.fillRect(130, 200, 50, 60); // Lối vào trường học
+        ctx.fillRect(390, 200, 40, 60); // Lối vào Hair Salon
+
+        // Viền đường
+        ctx.fillStyle = "#c8a268";
+        ctx.fillRect(60, 246, 460, 4);
+        ctx.fillRect(60, 310, 460, 4);
+
+        // 5. Hàng cây xanh bao viền trên và dưới đất liền
+        for (let x = 0; x < 512; x += 32) {
+          drawPixelTree(x, 44);
+          drawPixelTree(x, 568);
+        }
+
+        // 6. Vẽ các công trình (School, Hair Salon, và Khu Bãi Biển)
+        buildings.forEach((b) => {
+          if (b.isBeachZone) {
+            // Vẽ dù che nắng & ghế nghỉ trên bãi biển để nhận diện khu vực Beach
+            drawBeachUmbrella(590, 280, "#e74c3c");
+            drawBeachUmbrella(600, 410, "#9b59b6");
+
+            // Biển hiệu Bãi Biển
+            ctx.fillStyle = "#fff";
+            ctx.strokeStyle = "#111";
+            ctx.lineWidth = 2;
+            ctx.fillRect(b.x + 15, b.y - 10, 150, 26);
+            ctx.strokeRect(b.x + 15, b.y - 10, 150, 26);
+
+            ctx.fillStyle = "#0277bd";
+            ctx.font = "bold 20px VT323";
+            ctx.textAlign = "center";
+            ctx.fillText("🏖️ Bãi Biển (Vào chơi)", b.x + 90, b.y + 8);
+            return;
+          }
+
+          // Bóng đổ tòa nhà
+          ctx.fillStyle = "rgba(0,0,0,0.25)";
+          ctx.fillRect(b.x + 6, b.y + b.h - 4, b.w, 12);
+
+          // Tường nhà
+          ctx.fillStyle = b.color;
+          ctx.fillRect(b.x, b.y + 26, b.w, b.h - 26);
+          ctx.strokeStyle = "#111";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(b.x, b.y + 26, b.w, b.h - 26);
+
+          // Mái nhà
+          ctx.fillStyle = b.roof;
+          ctx.fillRect(b.x - 6, b.y, b.w + 12, 26);
+          ctx.strokeRect(b.x - 6, b.y, b.w + 12, 26);
+
+          // Cửa sổ
+          ctx.fillStyle = "#81d4fa";
+          ctx.fillRect(b.x + 16, b.y + 42, 22, 22);
+          ctx.fillRect(b.x + b.w - 38, b.y + 42, 22, 22);
+
+          // Cửa chính
+          ctx.fillStyle = "#5c3a21";
+          ctx.fillRect(b.x + b.w / 2 - 14, b.y + b.h - 32, 28, 32);
+
+          // Bảng tên tòa nhà
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(b.x + b.w / 2 - 70, b.y - 26, 140, 22);
+          ctx.strokeRect(b.x + b.w / 2 - 70, b.y - 26, 140, 22);
+
+          ctx.fillStyle = "#111";
+          ctx.font = "bold 19px VT323";
+          ctx.textAlign = "center";
+          ctx.fillText(`${b.icon} ${b.name}`, b.x + b.w / 2, b.y - 10);
+        });
+
+        // 7. Vẽ NPC đi dạo xung quanh
+        npcs.forEach((n) => {
+          n.x += n.vx;
+          if (n.x < n.minX || n.x > n.maxX) n.vx *= -1;
+
+          // Bóng NPC
+          ctx.fillStyle = "rgba(0,0,0,0.3)";
+          ctx.beginPath();
+          ctx.ellipse(n.x + 12, n.y + 32, 10, 5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Thân NPC
+          ctx.fillStyle = n.shirtColor;
+          ctx.fillRect(n.x + 2, n.y + 10, 20, 20);
+          // Đầu NPC
+          ctx.fillStyle = "#ffccaa";
+          ctx.fillRect(n.x + 4, n.y, 16, 12);
+          // Tóc NPC
+          ctx.fillStyle = n.hairColor;
+          ctx.fillRect(n.x + 4, n.y, 16, 5);
+
+          // Icon chat trên đầu
+          ctx.fillStyle = "#fff";
+          ctx.strokeStyle = "#111";
+          ctx.lineWidth = 2;
+          ctx.font = "16px VT323";
+          ctx.textAlign = "center";
+          ctx.strokeText("💬", n.x + 12, n.y - 8);
+          ctx.fillText("💬", n.x + 12, n.y - 8);
+        });
+
+        // 8. Vẽ nhân vật người chơi đứng ở ngã ba đường
+        drawPlayer(270, 275);
+      }
+
+      function drawPixelTree(x, y) {
+        ctx.fillStyle = "#2e7d32";
+        ctx.beginPath();
+        ctx.arc(x + 16, y + 16, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#4caf50";
+        ctx.beginPath();
+        ctx.arc(x + 14, y + 14, 9, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawBeachUmbrella(x, y, color) {
+        // Bóng dù
+        ctx.fillStyle = "rgba(0,0,0,0.2)";
+        ctx.beginPath();
+        ctx.ellipse(x + 18, y + 28, 18, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cán dù
+        ctx.fillStyle = "#5c3a21";
+        ctx.fillRect(x + 14, y + 10, 4, 20);
+
+        // Tán dù
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x + 16, y + 12, 20, Math.PI, 0);
+        ctx.fill();
+        ctx.strokeStyle = "#111";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      function drawPlayer(x, y) {
+        // Bóng người chơi
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        ctx.beginPath();
+        ctx.ellipse(x + 10, y + 26, 9, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Áo (Xanh cho Nam, Hồng cho Nữ)
+        ctx.fillStyle = playerData.gender === "girl" ? "#ec407a" : "#3b4cca";
+        ctx.fillRect(x + 2, y + 8, 16, 16);
+        // Đầu
+        ctx.fillStyle = "#ffccaa";
+        ctx.fillRect(x + 3, y - 2, 14, 11);
+        // Mũ
+        ctx.fillStyle = playerData.gender === "girl" ? "#ff80ab" : "#e53935";
+        ctx.fillRect(x + 3, y - 4, 14, 5);
+
+        // Tên người chơi
+        ctx.fillStyle = "#fff";
+        ctx.strokeStyle = "#111";
+        ctx.lineWidth = 3;
+        ctx.font = "bold 18px VT323";
+        ctx.textAlign = "center";
+        ctx.strokeText(playerData.name, x + 10, y - 10);
+        ctx.fillText(playerData.name, x + 10, y - 10);
+      }
+
+      function gameLoop() {
+        ctx.clearRect(0, 0, 800, 600);
+        drawMap2();
+        requestAnimationFrame(gameLoop);
+      }
+      gameLoop();
+
+      // 3. XỬ LÝ CLICK VÀO CÔNG TRÌNH HOẶC NPC
+      canvas.addEventListener("click", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left) * (800 / rect.width);
+        const mouseY = (e.clientY - rect.top) * (600 / rect.height);
+
+        // Kiểm tra click vào công trình (School, Hair Salon, Beach)
+        for (let b of buildings) {
+          if (
+            mouseX >= b.x &&
+            mouseX <= b.x + b.w &&
+            mouseY >= b.y - 20 &&
+            mouseY <= b.y + b.h
+          ) {
+            window.location.href = b.url;
+            return;
+          }
+        }
+
+        // Kiểm tra click vào NPC
+        for (let n of npcs) {
+          if (
+            mouseX >= n.x - 10 &&
+            mouseX <= n.x + 34 &&
+            mouseY >= n.y - 15 &&
+            mouseY <= n.y + 40
+          ) {
+            document.getElementById("dialog-title").textContent = n.name;
+            document.getElementById("dialog-text").textContent = n.text;
+            document.getElementById("dialog-box").style.display = "block";
+            return;
+          }
+        }
+
+        document.getElementById("dialog-box").style.display = "none";
+      });
+    </script>
+  </body>
+</html>
