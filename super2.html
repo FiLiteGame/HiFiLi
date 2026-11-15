@@ -237,7 +237,8 @@
 
       <!-- THANH THÔNG BÁO -->
       <div class="notification-bar" id="notification-text">
-        Chào mừng bạn đến với Siêu thị MegaValue! Hãy chọn nguyên liệu cần mua.
+        Chào mừng bạn đến với Siêu thị MegaValue! Đã cập nhật đơn vị bán lẻ
+        chuẩn xác.
       </div>
     </div>
 
@@ -249,16 +250,16 @@
       document.getElementById("balance-display").textContent =
         balance.toFixed(2);
 
-      // Danh sách mặt hàng nguyên liệu chuẩn (Giá từ $0.5 đến $2.0)
+      // Danh sách mặt hàng (Chanh và Bột Mì bán theo 500g, các món khác bán theo đơn vị 1 cái/lọ/gói)
       const shopItems = [
-        { id: "lemon", name: "🍋 Chanh Tươi (Kg)", price: 1.2 },
-        { id: "sugar", name: "🧂 Đường Trắng (Kg)", price: 1.0 },
-        { id: "cup", name: "🥤 Cốc Giấy (Hộp 10c)", price: 0.8 },
-        { id: "straw", name: "🥤 Ống Hút (Bịch 50c)", price: 0.5 },
-        { id: "flour", name: "🌾 Bột Mì (Kg)", price: 1.5 },
-        { id: "honey", name: "🍯 Mật Ong Nguyên Chất", price: 2.0 },
-        { id: "cookie", name: "🍪 Bánh Quy (Hộp)", price: 1.6 },
-        { id: "bag", name: "🛍️ Túi Giấy Đựng (10c)", price: 0.9 },
+        { id: "lemon", name: "🍋 Chanh Tươi (500g)", price: 0.4 },
+        { id: "sugar", name: "🧂 Đường Trắng (Gói)", price: 0.5 },
+        { id: "cup", name: "🥤 Cốc Giấy (Cái)", price: 0.05 },
+        { id: "straw", name: "🥤 Ống Hút (Cái)", price: 0.02 },
+        { id: "flour", name: "🌾 Bột Mì (500g)", price: 0.45 },
+        { id: "honey", name: "🍯 Mật Ong Nguyên Chất (Lọ)", price: 1.2 },
+        { id: "cookie", name: "🍪 Bánh Quy (Hộp)", price: 1.0 },
+        { id: "bag", name: "🛍️ Túi Giấy Đựng (Cái)", price: 0.04 },
       ];
 
       // 2. HIỂN THỊ KỆ HÀNG

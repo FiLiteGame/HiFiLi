@@ -235,7 +235,7 @@
           <div class="recipe-card">
             <div><b>🍋 Nước Chanh Truyền Thống</b></div>
             <div style="font-size: 18px; color: #555">
-              Cần: 1 Chanh Tươi, 1 Đường, 1 Cốc Giấy, 1 Ống Hút
+              Cần: Chanh (500g), Đường (Gói), Cốc Giấy (Cái), Ống Hút (Cái)
             </div>
             <button class="btn-craft" onclick="craftDrink('lemonade', 1)">
               Pha 1 Cốc
@@ -246,7 +246,7 @@
           <div class="recipe-card">
             <div><b>🍯 Nước Chanh Mật Ong Độc Quyền</b></div>
             <div style="font-size: 18px; color: #555">
-              Cần: 1 Chanh Tươi, 1 Mật Ong, 1 Cốc Giấy, 1 Ống Hút
+              Cần: Chanh (500g), Mật Ong (Lọ), Cốc Giấy (Cái), Ống Hút (Cái)
             </div>
             <button class="btn-craft" onclick="craftDrink('honey_lemonade', 1)">
               Pha 1 Cốc
@@ -328,52 +328,85 @@
       }
       updateMiniInventory();
 
-      // 2. PHA CHẾ TRONG BẾP (TỰ ĐỘNG TRỪ HAO NGUYÊN LIỆU)
+      // Hàm tìm kiếm khóa nguyên liệu an toàn (hỗ trợ cả từ khóa không dấu/có dấu)
+      function findKey(keywordList) {
+        for (let k of Object.keys(inventory)) {
+          const lowerK = k.toLowerCase();
+          for (let word of keywordList) {
+            if (lowerK.includes(word.toLowerCase())) {
+              return k;
+            }
+          }
+        }
+        return null;
+      }
+
+      // 2. PHA CHẾ TRONG BẾP (Có báo lỗi chi tiết nguyên liệu thiếu)
       function craftDrink(type, amount) {
+        const chanhKey = findKey(["chanh"]);
+        const duongKey = findKey(["đường", "duong"]);
+        const cocKey = findKey(["cốc", "coc"]);
+        const ongHutKey = findKey(["ống hút", "ong hut"]);
+        const matOngKey = findKey(["mật ong", "mat ong"]);
+
         if (type === "lemonade") {
-          // Cần: Chanh Tươi (Kg), Đường Trắng (Kg), Cốc Giấy (Hộp 10c), Ống Hút (Bịch 50c) -> Dùng 1 đơn vị mỗi loại
-          if (
-            (inventory["🍋 Chanh Tươi (Kg)"] || 0) >= 1 &&
-            (inventory["🧂 Đường Trắng (Kg)"] || 0) >= 1 &&
-            (inventory["🥤 Cốc Giấy (Hộp 10c)"] || 0) >= 1 &&
-            (inventory["🥤 Ống Hút (Bịch 50c)"] || 0) >= 1
-          ) {
-            inventory["🍋 Chanh Tươi (Kg)"] -= 1;
-            inventory["🧂 Đường Trắng (Kg)"] -= 1;
-            inventory["🥤 Cốc Giấy (Hộp 10c)"] -= 1;
-            inventory["🥤 Ống Hút (Bịch 50c)"] -= 1;
+          let missing = [];
+          if (!chanhKey || (inventory[chanhKey] || 0) < 1)
+            missing.push("Chanh (500g)");
+          if (!duongKey || (inventory[duongKey] || 0) < 1)
+            missing.push("Đường (Gói)");
+          if (!cocKey || (inventory[cocKey] || 0) < 1)
+            missing.push("Cốc Giấy (Cái)");
+          if (!ongHutKey || (inventory[ongHutKey] || 0) < 1)
+            missing.push("Ống Hút (Cái)");
 
-            readyStock += 1;
-            saveAndRefresh();
+          if (missing.length > 0) {
             showNotification(
-              "✅ Pha chế thành công 1 Cốc Nước Chanh Truyền Thống!",
+              `❌ Thiếu: ${missing.join(", ")}! Hãy kiểm tra lại kho.`,
             );
-          } else {
-            showNotification(
-              "❌ Không đủ nguyên liệu! Hãy ghé siêu thị mua thêm.",
-            );
+            return;
           }
+
+          // Trừ nguyên liệu
+          inventory[chanhKey] -= 1;
+          inventory[duongKey] -= 1;
+          inventory[cocKey] -= 1;
+          inventory[ongHutKey] -= 1;
+
+          readyStock += 1;
+          saveAndRefresh();
+          showNotification(
+            "✅ Pha chế thành công 1 Cốc Nước Chanh Truyền Thống!",
+          );
         } else if (type === "honey_lemonade") {
-          // Cần: Chanh Tươi, Mật Ong, Cốc Giấy, Ống Hút
-          if (
-            (inventory["🍋 Chanh Tươi (Kg)"] || 0) >= 1 &&
-            (inventory["🍯 Mật Ong Nguyên Chất"] || 0) >= 1 &&
-            (inventory["🥤 Cốc Giấy (Hộp 10c)"] || 0) >= 1 &&
-            (inventory["🥤 Ống Hút (Bịch 50c)"] || 0) >= 1
-          ) {
-            inventory["🍋 Chanh Tươi (Kg)"] -= 1;
-            inventory["🍯 Mật Ong Nguyên Chất"] -= 1;
-            inventory["🥤 Cốc Giấy (Hộp 10c)"] -= 1;
-            inventory["🥤 Ống Hút (Bịch 50c)"] -= 1;
+          let missing = [];
+          if (!chanhKey || (inventory[chanhKey] || 0) < 1)
+            missing.push("Chanh (500g)");
+          if (!matOngKey || (inventory[matOngKey] || 0) < 1)
+            missing.push("Mật Ong (Lọ)");
+          if (!cocKey || (inventory[cocKey] || 0) < 1)
+            missing.push("Cốc Giấy (Cái)");
+          if (!ongHutKey || (inventory[ongHutKey] || 0) < 1)
+            missing.push("Ống Hút (Cái)");
 
-            readyStock += 2; // Nước chanh mật ong chất lượng cao tính 2 đơn vị stock hoặc tùy chỉnh
-            saveAndRefresh();
+          if (missing.length > 0) {
             showNotification(
-              "✅ Pha chế thành công Nước Chanh Mật Ong Độc Quyền!",
+              `❌ Thiếu: ${missing.join(", ")}! Hãy kiểm tra lại kho.`,
             );
-          } else {
-            showNotification("❌ Không đủ nguyên liệu mật ong hoặc chanh!");
+            return;
           }
+
+          // Trừ nguyên liệu
+          inventory[chanhKey] -= 1;
+          inventory[matOngKey] -= 1;
+          inventory[cocKey] -= 1;
+          inventory[ongHutKey] -= 1;
+
+          readyStock += 2; // Nước chanh mật ong chất lượng cao tính 2 đơn vị stock
+          saveAndRefresh();
+          showNotification(
+            "✅ Pha chế thành công Nước Chanh Mật Ong Độc Quyền!",
+          );
         }
       }
 
@@ -405,7 +438,6 @@
         let soldCount = 0;
         let earnedMoney = 0;
 
-        // Giả lập 3-5 lượt khách hàng ghé qua
         let visitors = Math.floor(Math.random() * 3) + 3;
 
         logBox.innerHTML = `[Hệ thống] Mở cửa đón khách với giá $${priceInput.toFixed(2)}/cốc...\n`;
@@ -413,12 +445,9 @@
         for (let i = 0; i < visitors; i++) {
           if (readyStock <= 0) break;
 
-          // Khách hàng đánh giá giá tiền (Mức giá hợp lý theo thị trường nắng gắt là từ $2.0 đến $3.5)
           if (priceInput > 4.5) {
-            // Quá đắt, khách chê và bỏ đi
             logBox.innerHTML += `> Khách #${i + 1}: "Giá $${priceInput} đắt quá trời! Thôi tôi không mua đâu." (Bỏ đi)\n`;
           } else if (priceInput > 3.2) {
-            // Khách mặc cả hoặc phân vân
             if (Math.random() > 0.5) {
               readyStock--;
               soldCount++;
@@ -428,7 +457,6 @@
               logBox.innerHTML += `> Khách #${i + 1}: "Giá chát thế nhỉ, qua quán khác thôi." (Không mua)\n`;
             }
           } else {
-            // Giá hợp lý, khách mua ngay lập tức
             readyStock--;
             soldCount++;
             earnedMoney += priceInput;
@@ -436,7 +464,6 @@
           }
         }
 
-        // Cập nhật số tiền thu được vào balance tài khoản ngân hàng
         balance += earnedMoney;
         localStorage.setItem("playerBalance", balance.toFixed(2));
         document.getElementById("balance-display").textContent =
