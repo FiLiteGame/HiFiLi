@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cửa Hàng Thời Trang - Pixel Fashion Shop</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        user-select: none;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #1a1c2c;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: "VT323", monospace;
+        overflow: hidden;
+      }
+
+      /* Khung game 800x600 chuẩn Pixel Retro */
+      #game-container {
+        position: relative;
+        width: 800px;
+        height: 600px;
+        border: 6px solid #111;
+        box-shadow:
+          0 0 0 4px #e91e63,
+          0 20px 40px rgba(0, 0, 0, 0.8);
+        background-color: #f0f3f8;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* 1. THANH TRÊN CÙNG */
+      .top-bar {
+        height: 50px;
+        background-color: #1a1c2c;
+        border-bottom: 4px solid #111;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        color: #fff;
+        font-size: 24px;
+      }
+
+      .badge-money {
+        background-color: #4caf50;
+        padding: 2px 10px;
+        border: 2px solid #111;
+        box-shadow: 2px 2px 0 #111;
+      }
+
+      .btn-back {
+        background-color: #e74c3c;
+        color: #fff;
+        border: 2px solid #111;
+        padding: 2px 14px;
+        font-family: "VT323", monospace;
+        font-size: 22px;
+        cursor: pointer;
+        box-shadow: 2px 2px 0 #111;
+      }
+      .btn-back:active {
+        transform: translateY(2px);
+        box-shadow: 0 0 0 #111;
+      }
+
+      /* 2. KHU VỰC CHÍNH (CỬA HÀNG & TỦ ĐỒ) */
+      .shop-layout {
+        flex: 1;
+        display: flex;
+        padding: 15px;
+        gap: 15px;
+        background: #e2e8f0;
+        overflow: hidden;
+      }
+
+      /* Bảng hàng hóa chia theo danh mục */
+      .shop-section {
+        flex: 1.5;
+        background: #fff;
+        border: 4px solid #111;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow-y: auto;
+      }
+
+      .section-title {
+        font-size: 22px;
+        color: #1d266b;
+        border-bottom: 2px dashed #1d266b;
+        padding-bottom: 4px;
+        text-transform: uppercase;
+      }
+
+      .items-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .item-card {
+        background: #f8f9fa;
+        border: 3px solid #333;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 2px 2px 0 #333;
+        gap: 6px;
+      }
+
+      .item-name {
+        font-size: 18px;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+
+      .item-price {
+        font-size: 18px;
+        color: #c0392b;
+      }
+
+      .btn-action {
+        background-color: #ffde00;
+        color: #111;
+        border: 2px solid #111;
+        padding: 2px;
+        font-family: "VT323", monospace;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 2px 2px 0 #111;
+        text-align: center;
+      }
+      .btn-action:hover {
+        background-color: #ffee55;
+      }
+      .btn-action:active {
+        transform: translateY(2px);
+        box-shadow: 0 0 0 #111;
+      }
+      .btn-action:disabled {
+        background-color: #bdc3c7;
+        color: #7f8c8d;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      /* Tủ đồ & Nhân vật (Phải) */
+      .wardrobe-panel {
+        flex: 1;
+        background: #1d266b;
+        border: 4px solid #111;
+        color: #fff;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+        gap: 10px;
+      }
+
+      .wardrobe-title {
+        font-size: 22px;
+        color: #ffde00;
+        border-bottom: 2px dashed #ffde00;
+        padding-bottom: 4px;
+        text-transform: uppercase;
+      }
+
+      .character-preview {
+        background: #111;
+        border: 3px solid #ffde00;
+        height: 180px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: #00ff00;
+        text-align: center;
+        padding: 10px;
+        gap: 5px;
+      }
+
+      .equipped-slots {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 18px;
+        overflow-y: auto;
+        flex: 1;
+      }
+
+      .slot-row {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 4px 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        justify-content: space-between;
+      }
+
+      /* Thông báo trạng thái */
+      .notification-bar {
+        height: 40px;
+        background-color: #111;
+        color: #ffde00;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- THANH TRÊN CÙNG -->
+      <div class="top-bar">
+        <div>👗 <b>Pixel Fashion Shop</b></div>
+        <div style="display: flex; align-items: center; gap: 15px">
+          <span class="badge-money"
+            >💰 $<span id="balance-display">15.00</span></span
+          >
+          <button class="btn-back" onclick="goToMap()">⬅ Về Bản Đồ</button>
+        </div>
+      </div>
+
+      <!-- KHU VỰC MUA SẮM -->
+      <div class="shop-layout">
+        <!-- Cột trái: Cửa hàng thời trang -->
+        <div class="shop-section">
+          <div class="section-title">🛍️ Bộ Sưu Tập Thời Trang</div>
+          <div class="items-grid" id="shop-items-grid">
+            <!-- Render tự động bằng JS -->
+          </div>
+        </div>
+
+        <!-- Cột phải: Tủ đồ cá nhân & Nhân vật -->
+        <div class="wardrobe-panel">
+          <div class="wardrobe-title">👕 Tủ Đồ Của Bạn</div>
+
+          <div class="character-preview" id="char-preview">
+            <div>🧍 [ Nhân Vật Pixel ]</div>
+            <div id="preview-hat" style="font-size: 16px; color: #ffde00">
+              Mũ: Trống
+            </div>
+            <div id="preview-clothes" style="font-size: 16px; color: #ffde00">
+              Áo: Áo Thun Thường
+            </div>
+            <div id="preview-shoes" style="font-size: 16px; color: #ffde00">
+              Giày: Giày Vải
+            </div>
+            <div id="preview-bag" style="font-size: 16px; color: #ffde00">
+              Túi: Không có
+            </div>
+          </div>
+
+          <div style="font-size: 18px; margin-top: 5px">🎒 Đang trang bị:</div>
+          <div class="equipped-slots" id="equipped-slots">
+            <!-- Danh sách trang bị hiện tại -->
+          </div>
+        </div>
+      </div>
+
+      <!-- THANH THÔNG BÁO -->
+      <div class="notification-bar" id="notification-text">
+        Chào mừng đến cửa hàng thời trang! Sắm ngay outfit đẹp để thu hút khách
+        hàng nào!
+      </div>
+    </div>
+
+    <script>
+      // 1. DỮ LIỆU TÀI CHÍNH & TỦ ĐỒ
+      let balance = parseFloat(localStorage.getItem("playerBalance")) || 15.0;
+
+      // Kho đồ sở hữu lưu dạng mảng id item: ["hat_cap", "clothes_shirt", ...]
+      let ownedItems = JSON.parse(
+        localStorage.getItem("playerOwnedClothes"),
+      ) || ["clothes_shirt", "shoes_sneakers"];
+
+      // Trang bị hiện tại: { hat: null, clothes: "clothes_shirt", shoes: "shoes_sneakers", bag: null }
+      let equipped = JSON.parse(localStorage.getItem("playerEquipped")) || {
+        hat: null,
+        clothes: "clothes_shirt",
+        shoes: "shoes_sneakers",
+        bag: null,
+      };
+
+      document.getElementById("balance-display").textContent =
+        balance.toFixed(2);
+
+      // 2. DANH SÁCH MẶT HÀNG THỜI TRANG (GIÁ CẢ HỢP LÝ)
+      const fashionItems = [
+        // Mũ
+        { id: "hat_cap", name: "🧢 Mũ Lưỡi Trai", category: "hat", price: 3.5 },
+        {
+          id: "hat_fedora",
+          name: "🎩 Mũ Phớt Lịch Lãm",
+          category: "hat",
+          price: 6.0,
+        },
+        {
+          id: "hat_crown",
+          name: "👑 Vương Miện Vàng",
+          category: "hat",
+          price: 15.0,
+        },
+
+        // Quần áo
+        {
+          id: "clothes_shirt",
+          name: "👕 Áo Thun Pixel",
+          category: "clothes",
+          price: 0.0,
+        }, // Đồ mặc định miễn phí
+        {
+          id: "clothes_suit",
+          name: "👔 Áo Sơ Mi Công Sở",
+          category: "clothes",
+          price: 8.5,
+        },
+        {
+          id: "clothes_jacket",
+          name: "🧥 Áo Khoác Da Bụi",
+          category: "clothes",
+          price: 12.0,
+        },
+
+        // Giày
+        {
+          id: "shoes_sneakers",
+          name: "👟 Giày Sneaker",
+          category: "shoes",
+          price: 0.0,
+        }, // Mặc định miễn phí
+        {
+          id: "shoes_oxford",
+          name: "👞 Giày Tây Sang Trọng",
+          category: "shoes",
+          price: 7.0,
+        },
+        {
+          id: "shoes_boots",
+          name: "🥾 Giày Boots Phượt",
+          category: "shoes",
+          price: 10.0,
+        },
+
+        // Túi xách
+        {
+          id: "bag_backpack",
+          name: "🎒 Balo Tiện Lợi",
+          category: "bag",
+          price: 5.0,
+        },
+        {
+          id: "bag_handbag",
+          name: "👜 Túi Xách Thời Trang",
+          category: "bag",
+          price: 9.0,
+        },
+        {
+          id: "bag_briefcase",
+          name: "💼 Cặp Doanh Nhân",
+          category: "bag",
+          price: 14.0,
+        },
+      ];
+
+      // 3. HIỂN THỊ CỬA HÀNG VÀ TỦ ĐỒ
+      function renderShop() {
+        const grid = document.getElementById("shop-items-grid");
+        grid.innerHTML = "";
+
+        fashionItems.forEach((item) => {
+          let isOwned = ownedItems.includes(item.id);
+          let isEquipped = equipped[item.category] === item.id;
+
+          let btnText = "Mua";
+          let isDisabled = false;
+          let actionFunc = `buyItem('${item.id}', ${item.price}, '${item.name}', '${item.category}')`;
+
+          if (isOwned) {
+            if (isEquipped) {
+              btnText = "Đang Mặc";
+              isDisabled = true;
+            } else {
+              btnText = "Trang Bị";
+              actionFunc = `equipItem('${item.id}', '${item.category}')`;
+            }
+          }
+
+          grid.innerHTML += `
+            <div class="item-card">
+              <div>
+                <div class="item-name">${item.name}</div>
+                <div class="item-price">${item.price === 0 ? "Miễn phí" : "$" + item.price.toFixed(2)}</div>
+              </div>
+              <button class="btn-action" ${isDisabled ? "disabled" : ""} onclick="${actionFunc}">${btnText}</button>
+            </div>
+          `;
+        });
+
+        renderWardrobe();
+      }
+
+      function renderWardrobe() {
+        // Cập nhật preview nhân vật
+        document.getElementById("preview-hat").textContent =
+          "Mũ: " + getItemName(equipped.hat);
+        document.getElementById("preview-clothes").textContent =
+          "Áo: " + getItemName(equipped.clothes);
+        document.getElementById("preview-shoes").textContent =
+          "Giày: " + getItemName(equipped.shoes);
+        document.getElementById("preview-bag").textContent =
+          "Túi: " + getItemName(equipped.bag);
+
+        // Cập nhật danh sách slot đang trang bị
+        const slotsBox = document.getElementById("equipped-slots");
+        slotsBox.innerHTML = `
+          <div class="slot-row"><span>Mũ:</span> <b>${getItemName(equipped.hat)}</b></div>
+          <div class="slot-row"><span>Áo:</span> <b>${getItemName(equipped.clothes)}</b></div>
+          <div class="slot-row"><span>Giày:</span> <b>${getItemName(equipped.shoes)}</b></div>
+          <div class="slot-row"><span>Túi:</span> <b>${getItemName(equipped.bag)}</b></div>
+        `;
+      }
+
+      function getItemName(id) {
+        if (!id) return "Trống";
+        let found = fashionItems.find((i) => i.id === id);
+        return found ? found.name : "Trống";
+      }
+
+      // 4. MUA VÀ TRANG BỊ
+      function buyItem(id, price, name, category) {
+        if (balance < price) {
+          showNotification(
+            `❌ Không đủ tiền! Cần $${price.toFixed(2)} để mua ${name}.`,
+          );
+          return;
+        }
+
+        balance -= price;
+        localStorage.setItem("playerBalance", balance.toFixed(2));
+        document.getElementById("balance-display").textContent =
+          balance.toFixed(2);
+
+        ownedItems.push(id);
+        localStorage.setItem("playerOwnedClothes", JSON.stringify(ownedItems));
+
+        // Tự động trang bị luôn sau khi mua
+        equipped[category] = id;
+        localStorage.setItem("playerEquipped", JSON.stringify(equipped));
+
+        showNotification(`✅ Đã mua và trang bị thành công ${name}!`);
+        renderShop();
+      }
+
+      function equipItem(id, category) {
+        equipped[category] = id;
+        localStorage.setItem("playerEquipped", JSON.stringify(equipped));
+
+        let name = getItemName(id);
+        showNotification(`👕 Đã thay đổi trang bị: ${name}!`);
+        renderShop();
+      }
+
+      function showNotification(text) {
+        document.getElementById("notification-text").textContent = text;
+      }
+
+      function goToMap() {
+        window.location.href = "map.html";
+      }
+
+      // Khởi chạy
+      renderShop();
+    </script>
+  </body>
+</html>

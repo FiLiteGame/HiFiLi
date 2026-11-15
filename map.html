@@ -526,18 +526,24 @@
         </div>
       </div>
 
-      <div class="objective-box">
+      <div
+        class="objective-box"
+        onclick="goTo('goal.html')"
+        style="cursor: pointer"
+      >
         <span>🎯 Mục tiêu: Kiếm 2,000 Fi trong 15 ngày!</span>
         <button
           class="tour-btn"
           onclick="
-            showToast('Khám phá thị trấn, đọc bản tin và ghé các cửa hàng nhé!')
+            event.stopPropagation();
+            showToast(
+              'Khám phá thị trấn, đọc bản tin và ghé các cửa hàng nhé!',
+            );
           "
         >
           ? Tour
         </button>
       </div>
-
       <div id="morning-popup">
         <span>
           📰 <b>Chào buổi sáng!</b> Kiểm tra điện thoại để đọc bản tin trước khi
@@ -606,17 +612,32 @@
             <button class="back-to-home" onclick="backToAppGrid()">
               ⬅ Quay lại
             </button>
+
             <div class="news-card">
-              <b>☀️ Thời tiết: Nắng đẹp!</b><br />
-              Nhu cầu nước giải khát và kem có thể tăng trong ngày nóng.
+              <b>🌤️ DAILY MARKET REPORT</b>
+              <div id="daily-weather" style="margin-top: 8px">
+                Đang cập nhật...
+              </div>
             </div>
+
             <div class="news-card">
-              <b>📈 Thị trường:</b><br />
-              Nhóm nông nghiệp tại FreshFarm đang được chú ý.
+              <b>📈 BUSINESS NEWS</b>
+              <div id="business-news" style="margin-top: 8px">
+                Đang cập nhật...
+              </div>
             </div>
+
             <div class="news-card">
-              <b>💡 Mẹo kinh doanh:</b><br />
-              Quan sát nhu cầu và giá cả trước khi nhập hàng.
+              <b>📚 ECONOMICS DICTIONARY</b>
+              <div id="economics-term" style="margin-top: 8px">
+                Đang cập nhật...
+              </div>
+              <button
+                onclick="randomEconomicsTerm()"
+                style="margin-top: 10px; padding: 5px 10px; cursor: pointer"
+              >
+                🎲 Thuật ngữ khác
+              </button>
             </div>
           </div>
 
@@ -1159,7 +1180,7 @@
         window.toastTimer = setTimeout(() => (t.style.display = "none"), 2600);
       }
 
-      function nextDay() {
+      {
         if (currentDay < 15) {
           currentDay++;
           updateDay();
@@ -1183,11 +1204,49 @@
 
       function openApp(name) {
         document.getElementById("app-grid").style.display = "none";
+
         document
           .querySelectorAll(".app-content")
           .forEach((x) => (x.style.display = "none"));
+
         document.getElementById("app-" + name).style.display = "flex";
         document.getElementById("phone-title").textContent = name.toUpperCase();
+
+        if (name === "news") {
+          refreshDailyNews();
+          randomEconomicsTerm();
+        }
+      }
+
+      function nextDay() {
+        if (currentDay < 15) {
+          currentDay++;
+          updateDay();
+
+          refreshDailyNews();
+          randomEconomicsTerm();
+
+          showToast(
+            `Đã chuyển sang ngày ${currentDay}! Chúc bạn kinh doanh thuận lợi.`,
+          );
+        } else {
+          showToast("Đã kết thúc vòng 1!");
+        }
+      }
+      function nextDay() {
+        if (currentDay < 15) {
+          currentDay++;
+          updateDay();
+
+          refreshDailyNews();
+          randomEconomicsTerm();
+
+          showToast(
+            `Đã chuyển sang ngày ${currentDay}! Chúc bạn kinh doanh thuận lợi.`,
+          );
+        } else {
+          showToast("Đã kết thúc vòng 1!");
+        }
       }
 
       function backToAppGrid() {
@@ -1220,6 +1279,271 @@
           document.getElementById("dialog-box").style.display = "none";
         }
       });
+
+      // ===================================
+      // DAILY NEWS & ECONOMICS SYSTEM
+      // ===================================
+
+      const weatherTypes = [
+        {
+          name: "Nắng nóng ☀️",
+          description: "Nhiệt độ cao, trời nắng và ít mây.",
+          lemonade: 1.5,
+          icecream: 1.6,
+          farm: 1.0,
+          clothes: 1.0,
+          message: "Nhu cầu nước chanh và kem tăng mạnh do thời tiết nóng.",
+        },
+        {
+          name: "Trời mát 🌤️",
+          description: "Thời tiết dễ chịu, nhiệt độ ổn định.",
+          lemonade: 1.1,
+          icecream: 1.1,
+          farm: 1.1,
+          clothes: 1.0,
+          message:
+            "Thị trường tương đối ổn định. Người tiêu dùng có xu hướng mua sắm bình thường.",
+        },
+        {
+          name: "Trời lạnh ❄️",
+          description: "Nhiệt độ giảm, không khí lạnh.",
+          lemonade: 0.6,
+          icecream: 0.5,
+          farm: 0.9,
+          clothes: 1.4,
+          message:
+            "Nhu cầu kem và nước giải khát giảm. Nhu cầu quần áo ấm tăng.",
+        },
+        {
+          name: "Mưa lớn 🌧️",
+          description: "Mưa kéo dài trên toàn thị trấn.",
+          lemonade: 0.7,
+          icecream: 0.7,
+          farm: 1.2,
+          clothes: 0.8,
+          message:
+            "Lượng khách ghé các cửa hàng giảm do thời tiết xấu. Hoạt động nông nghiệp có thể chịu ảnh hưởng.",
+        },
+        {
+          name: "Trời nhiều mây ☁️",
+          description: "Trời âm u, nhiệt độ tương đối thấp.",
+          lemonade: 0.9,
+          icecream: 0.85,
+          farm: 1.0,
+          clothes: 1.1,
+          message:
+            "Nhu cầu đồ uống lạnh giảm nhẹ. Một số mặt hàng thời trang được quan tâm hơn.",
+        },
+      ];
+
+      const businessEvents = [
+        {
+          title: "📢 Xu hướng tiêu dùng mới",
+          content:
+            "Người dân đang quan tâm nhiều hơn đến các sản phẩm có giá cả phải chăng. Các cửa hàng nên cân nhắc chiến lược định giá.",
+        },
+        {
+          title: "🚚 Chi phí vận chuyển tăng",
+          content:
+            "Giá nhiên liệu tăng khiến chi phí vận chuyển hàng hóa cao hơn. Các doanh nghiệp có thể phải điều chỉnh giá bán.",
+        },
+        {
+          title: "🏪 Cạnh tranh thị trường",
+          content:
+            "Một cửa hàng mới chuẩn bị gia nhập thị trường. Các doanh nghiệp cần cải thiện chất lượng dịch vụ để giữ chân khách hàng.",
+        },
+        {
+          title: "📦 Nguồn cung khan hiếm",
+          content:
+            "Một số nguyên liệu đang trở nên khó tìm. Nguồn cung giảm có thể đẩy giá nguyên liệu lên cao.",
+        },
+        {
+          title: "💳 Thanh toán không tiền mặt",
+          content:
+            "Ngày càng nhiều người dân sử dụng thanh toán điện tử. Đây là cơ hội để các cửa hàng nâng cấp phương thức thanh toán.",
+        },
+        {
+          title: "📉 Sức mua suy giảm",
+          content:
+            "Người tiêu dùng có xu hướng thận trọng hơn trong chi tiêu. Các chương trình khuyến mãi có thể giúp kích thích nhu cầu.",
+        },
+        {
+          title: "🎉 Lễ hội mua sắm",
+          content:
+            "Thị trấn chuẩn bị tổ chức lễ hội. Lượng khách ghé thăm và nhu cầu mua sắm có thể tăng.",
+        },
+        {
+          title: "🌱 Sản phẩm xanh lên ngôi",
+          content:
+            "Người tiêu dùng bắt đầu chú ý nhiều hơn đến sản phẩm thân thiện với môi trường.",
+        },
+        {
+          title: "📊 Thị trường chứng khoán",
+          content:
+            "Các nhà đầu tư đang theo dõi sát sao biến động thị trường. Hãy cân nhắc rủi ro trước khi đưa ra quyết định đầu tư.",
+        },
+        {
+          title: "💰 Lãi suất thay đổi",
+          content:
+            "Sự thay đổi của lãi suất có thể ảnh hưởng đến quyết định tiết kiệm, vay vốn và đầu tư của người dân.",
+        },
+      ];
+
+      const economicsTerms = [
+        {
+          term: "Supply and Demand",
+          meaning:
+            "Cung và cầu: Mối quan hệ giữa lượng hàng hóa người bán muốn cung cấp và lượng hàng hóa người mua muốn mua.",
+          example:
+            "Khi trời nóng, nhiều người muốn mua kem hơn. Nếu nguồn cung không đổi, giá kem có thể tăng.",
+        },
+        {
+          term: "Inflation",
+          meaning:
+            "Lạm phát: Sự gia tăng liên tục của mức giá chung hàng hóa và dịch vụ trong nền kinh tế.",
+          example:
+            "Nếu giá thực phẩm, xăng dầu và quần áo cùng tăng trong một thời gian dài, sức mua của tiền sẽ giảm.",
+        },
+        {
+          term: "Opportunity Cost",
+          meaning:
+            "Chi phí cơ hội: Giá trị của phương án tốt nhất mà bạn phải từ bỏ khi đưa ra một lựa chọn.",
+          example:
+            "Dùng 100 Fi để nhập hàng đồng nghĩa với việc bạn không thể dùng số tiền đó cho một khoản đầu tư khác.",
+        },
+        {
+          term: "Scarcity",
+          meaning:
+            "Sự khan hiếm: Tình trạng nguồn lực có hạn trong khi nhu cầu của con người là vô hạn.",
+          example:
+            "Một nông trại chỉ có thể sản xuất 100 quả cà chua mỗi ngày dù thị trường cần 200 quả.",
+        },
+        {
+          term: "Profit Margin",
+          meaning: "Biên lợi nhuận: Tỷ lệ lợi nhuận so với doanh thu.",
+          example:
+            "Bán hàng thu về 100 Fi và lợi nhuận 20 Fi thì biên lợi nhuận là 20%.",
+        },
+        {
+          term: "Monopoly",
+          meaning:
+            "Độc quyền: Thị trường chỉ có một doanh nghiệp cung cấp một loại hàng hóa hoặc dịch vụ và có quyền lực thị trường đáng kể.",
+          example:
+            "Nếu chỉ có một nhà cung cấp điện trong một khu vực, doanh nghiệp đó có thể có quyền lực thị trường lớn.",
+        },
+        {
+          term: "GDP",
+          meaning:
+            "Gross Domestic Product – Tổng sản phẩm quốc nội: Tổng giá trị hàng hóa và dịch vụ cuối cùng được sản xuất trong một quốc gia trong một khoảng thời gian.",
+          example:
+            "GDP có thể được dùng để đánh giá quy mô và tốc độ tăng trưởng của nền kinh tế.",
+        },
+        {
+          term: "Elasticity of Demand",
+          meaning:
+            "Độ co giãn của cầu: Mức độ phản ứng của lượng cầu khi giá cả thay đổi.",
+          example:
+            "Nếu giá kem tăng 10% và lượng mua giảm 20%, cầu kem có độ co giãn theo giá lớn hơn 1.",
+        },
+        {
+          term: "Interest Rate",
+          meaning:
+            "Lãi suất: Tỷ lệ chi phí vay vốn hoặc lợi nhuận nhận được từ việc gửi tiền.",
+          example:
+            "Gửi 100 Fi với lãi suất 5% một năm sẽ tạo ra 5 Fi tiền lãi sau một năm.",
+        },
+        {
+          term: "Market Equilibrium",
+          meaning:
+            "Trạng thái cân bằng thị trường: Mức giá tại đó lượng cung bằng lượng cầu.",
+          example:
+            "Khi người bán cung cấp đúng số lượng kem mà khách hàng muốn mua tại một mức giá, thị trường đạt cân bằng.",
+        },
+        {
+          term: "Externality",
+          meaning:
+            "Ngoại ứng: Tác động của một hoạt động kinh tế lên bên thứ ba không trực tiếp tham gia giao dịch.",
+          example:
+            "Một nhà máy gây ô nhiễm không khí cho cư dân xung quanh tạo ra ngoại ứng tiêu cực.",
+        },
+        {
+          term: "Diversification",
+          meaning:
+            "Đa dạng hóa: Phân bổ vốn vào nhiều loại tài sản hoặc khoản đầu tư khác nhau để giảm rủi ro tập trung.",
+          example:
+            "Thay vì đầu tư toàn bộ tiền vào một công ty, nhà đầu tư có thể phân bổ vào nhiều ngành.",
+        },
+      ];
+
+      // Tạo tin tức cố định trong từng ngày
+      function getDailyNews() {
+        const storageKey = "dailyNews_" + currentDay;
+
+        let saved = localStorage.getItem(storageKey);
+
+        if (saved) {
+          return JSON.parse(saved);
+        }
+
+        const weatherIndex = Math.floor(Math.random() * weatherTypes.length);
+
+        const eventIndex = Math.floor(Math.random() * businessEvents.length);
+
+        const news = {
+          weather: weatherTypes[weatherIndex],
+          event: businessEvents[eventIndex],
+        };
+
+        localStorage.setItem(storageKey, JSON.stringify(news));
+
+        return news;
+      }
+
+      // Hiển thị bản tin
+      function refreshDailyNews() {
+        const news = getDailyNews();
+
+        document.getElementById("daily-weather").innerHTML = `
+              <b>${news.weather.name}</b><br>
+              ${news.weather.description}<br><br>
+              📰 ${news.weather.message}
+            `;
+
+        document.getElementById("business-news").innerHTML = `
+              <b>${news.event.title}</b><br>
+              ${news.event.content}
+            `;
+
+        // Lưu hệ số nhu cầu để các cửa hàng sử dụng
+        const demand = {
+          lemonade: news.weather.lemonade,
+          icecream: news.weather.icecream,
+          farm: news.weather.farm,
+          clothes: news.weather.clothes,
+        };
+
+        localStorage.setItem("marketDemand", JSON.stringify(demand));
+
+        document.getElementById("time-weather").textContent = news.weather.name;
+      }
+
+      // Chọn thuật ngữ kinh tế ngẫu nhiên
+      function randomEconomicsTerm() {
+        const index = Math.floor(Math.random() * economicsTerms.length);
+
+        const term = economicsTerms[index];
+
+        document.getElementById("economics-term").innerHTML = `
+              <b style="color:#4568c7;font-size:23px">
+                ${term.term}
+              </b>
+              <br><br>
+              ${term.meaning}
+              <br><br>
+              <b>💡 Example:</b><br>
+              ${term.example}
+            `;
+      }
     </script>
   </body>
 </html>

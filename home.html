@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ngôi Nhà Của Tôi - Pixel Home</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        user-select: none;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #1a1c2c;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: "VT323", monospace;
+        overflow: hidden;
+      }
+
+      /* Khung game 800x600 chuẩn Pixel Retro */
+      #game-container {
+        position: relative;
+        width: 800px;
+        height: 600px;
+        border: 6px solid #111;
+        box-shadow:
+          0 0 0 4px #3498db,
+          0 20px 40px rgba(0, 0, 0, 0.8);
+        background-color: #2c3e50;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* 1. THANH TRÊN CÙNG */
+      .top-bar {
+        height: 50px;
+        background-color: #1a1c2c;
+        border-bottom: 4px solid #111;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        color: #fff;
+        font-size: 24px;
+      }
+
+      .badge-money {
+        background-color: #4caf50;
+        padding: 2px 10px;
+        border: 2px solid #111;
+        box-shadow: 2px 2px 0 #111;
+      }
+
+      .btn-back {
+        background-color: #e74c3c;
+        color: #fff;
+        border: 2px solid #111;
+        padding: 2px 14px;
+        font-family: "VT323", monospace;
+        font-size: 22px;
+        cursor: pointer;
+        box-shadow: 2px 2px 0 #111;
+      }
+      .btn-back:active {
+        transform: translateY(2px);
+        box-shadow: 0 0 0 #111;
+      }
+
+      /* 2. SƠ ĐỒ NGÔI NHÀ (FLOOR PLAN) */
+      .house-layout {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 6px;
+        padding: 10px;
+        background: #111;
+        overflow: hidden;
+      }
+
+      /* Từng phòng */
+      .room-box {
+        background: #f0f3f8;
+        border: 4px solid #222;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .room-name {
+        font-size: 20px;
+        color: #1d266b;
+        font-weight: bold;
+        border-bottom: 2px dashed #1d266b;
+        padding-bottom: 2px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+
+      /* Khu vực chứa đồ đạc trong phòng */
+      .furniture-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      /* Thẻ món đồ nội thất */
+      .furniture-item {
+        background: #fff;
+        border: 3px solid #333;
+        box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.1s ease;
+        padding: 5px;
+        text-align: center;
+      }
+
+      .furniture-item:hover {
+        background: #fff9c4;
+        border-color: #f39c12;
+        transform: translateY(-2px);
+        box-shadow: 3px 5px 0 rgba(0, 0, 0, 0.3);
+      }
+
+      .furniture-item:active {
+        transform: translateY(1px);
+        box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+      }
+
+      .f-icon {
+        font-size: 32px;
+        margin-bottom: 2px;
+      }
+
+      .f-label {
+        font-size: 16px;
+        color: #333;
+        font-weight: bold;
+      }
+
+      /* Thanh thông báo */
+      .notification-bar {
+        height: 40px;
+        background-color: #111;
+        color: #ffde00;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- THANH TRÊN CÙNG -->
+      <div class="top-bar">
+        <div>🏡 <b>Ngôi Nhà Của Bạn</b></div>
+        <div style="display: flex; align-items: center; gap: 15px">
+          <span class="badge-money"
+            >💰 $<span id="balance-display">15.00</span></span
+          >
+          <button class="btn-back" onclick="goToMap()">⬅ Về Bản Đồ</button>
+        </div>
+      </div>
+
+      <!-- MẶT BẰNG NGÔI NHÀ (4 PHÒNG VỚI ĐỒ ĐẠC) -->
+      <div class="house-layout">
+        <!-- 1. PHÒNG KHÁCH (LIVING ROOM) -->
+        <div class="room-box">
+          <div class="room-name">🛋️ Phòng Khách</div>
+          <div class="furniture-grid">
+            <div
+              class="furniture-item"
+              onclick="
+                interact(
+                  'sofa',
+                  'Bộ Sofa êm ái: Bạn ngồi nghỉ lưng và xem bản tin thời tiết.',
+                )
+              "
+            >
+              <div class="f-icon">🛋️</div>
+              <div class="f-label">Sofa</div>
+            </div>
+            <div
+              class="furniture-item"
+              onclick="
+                interact(
+                  'tv',
+                  'Tivi cũ kỹ: Đang phát chương trình âm nhạc thập niên 90.',
+                )
+              "
+            >
+              <div class="f-icon">📺</div>
+              <div class="f-label">Tivi</div>
+            </div>
+            <div
+              class="furniture-item"
+              onclick="
+                interact(
+                  'plant',
+                  'Cây cảnh góc nhà: Trông rất xanh tươi và tràn đầy sinh khí.',
+                )
+              "
+            >
+              <div class="f-icon">🪴</div>
+              <div class="f-label">Cây Cảnh</div>
+            </div>
+            <div
+              class="furniture-item"
+              onclick="
+                interact(
+                  'table',
+                  'Bàn trà: Nơi để ly trà và tạp chí kinh doanh.',
+                )
+              "
+            >
+              <div class="f-icon">🪵</div>
+              <div class="f-label">Bàn Trà</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. PHÒNG BẾP (KITCHEN) -->
+        <div class="room-box">
+          <div class="room-name">🍳 Phòng Bếp</div>
+          <div class="furniture-grid">
+            <div
+              class="furniture-item"
+              onclick="
+                interact(
+                  'fridge',
+                  'Tủ lạnh: Chứa đầy chanh tươi và nguyên liệu pha chế nước chanh.',
+                )
+              "
+            >
+              <div class="f-icon">🧊</div>
+              <div class="f-label">Tủ Lạnh</div>
+            </div>
+            <div
+              class="furniture-item"
+              onclick="
+                interact(
+                  'stove',
+                  'Bếp điện: Nơi đun nước đường và chế biến mật ong.',
+                )
+              "
+            >
+              <div class="f-icon">🔥</div>
+              <div class="f-label">Bếp Nấu</div>
+            </div>
+            <div
+              class="furniture-item"
+              onclick="
+                interact(
+                  'sink',
+                  'Bồn rửa bát: Rửa sạch các dụng cụ pha chế sau mỗi ngày bán hàng.',
+                )
+              "
+            >
+              <div class="f-icon">🚰</div>
+              <div class="f-label">Bồn Rửa</div>
+            </div>
+            <div
+              class="furniture-item"
+              onclick="interact('table', 'Bàn ăn nhỏ: Gọn gàng và sạch sẽ.')"
+            >
+              <div class="f-icon">🪑</div>
+              <div class="f-label">Bàn Ăn</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. PHÒNG NGỦ (BEDROOM) -->
+        <div class="room-box">
+          <div class="room-name">🛏️ Phòng Ngủ</div>
+          <div
+            class="furniture-grid"
+            style="
+              grid-template-columns: 1fr;
+              grid-template-rows: repeat(2, 1fr);
+            "
+          >
+            <div
+              class="furniture-item"
+              onclick="
+                interact(
+                  'bed',
+                  'Giường ngủ êm ái: Bạn ngả lưng chợp mắt một lúc và nạp lại năng lượng.',
+                )
+              "
+              style="grid-row: span 2"
+            >
+              <div class="f-icon" style="font-size: 48px">🛏️</div>
+              <div class="f-label" style="font-size: 20px">Giường Ngủ Lớn</div>
+            </div>
+            <div
+              class="furniture-item"
+              onclick="
+                interact(
+                  'wardrobe',
+                  'Tủ quần áo: Nơi cất giữ các bộ trang phục và phụ kiện thời trang của bạn.',
+                )
+              "
+              style="grid-row: span 2"
+            >
+              <div class="f-icon" style="font-size: 48px">🚪</div>
+              <div class="f-label" style="font-size: 20px">Tủ Quần Áo</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. PHÒNG TẮM (BATHROOM) -->
+        <div class="room-box">
+          <div class="room-name">🚽 Phòng Tắm</div>
+          <div class="furniture-grid">
+            <div
+              class="furniture-item"
+              onclick="
+                interact(
+                  'bathtub',
+                  'Bồn tắm nước nóng: Tắm gội sảng khoái, gột sạch mệt mỏi.',
+                )
+              "
+            >
+              <div class="f-icon">🛁</div>
+              <div class="f-label">Bồn Tắm</div>
+            </div>
+            <div
+              class="furniture-item"
+              onclick="interact('toilet', 'Bồn cầu sạch sẽ.')"
+            >
+              <div class="f-icon">🚽</div>
+              <div class="f-label">Vệ Sinh</div>
+            </div>
+            <div
+              class="furniture-item"
+              onclick="
+                interact(
+                  'mirror',
+                  'Gương soi: Bạn chải chuốt tóc tai gọn gàng trước khi ra ngoài.',
+                )
+              "
+              style="grid-column: span 2"
+            >
+              <div class="f-icon">🪞</div>
+              <div class="f-label">Gương Soi Toàn Thân</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THANH THÔNG BÁO -->
+      <div class="notification-bar" id="notification-text">
+        Nhấp vào bất kỳ món đồ nội thất nào trong nhà để tương tác!
+      </div>
+    </div>
+
+    <script>
+      // 1. DỮ LIỆU TÀI CHÍNH
+      let balance = parseFloat(localStorage.getItem("playerBalance")) || 15.0;
+      document.getElementById("balance-display").textContent =
+        balance.toFixed(2);
+
+      // 2. TƯƠNG TÁC VỚI ĐỒ ĐẠC
+      function interact(type, message) {
+        showNotification(message);
+      }
+
+      function showNotification(text) {
+        document.getElementById("notification-text").textContent = text;
+      }
+
+      function goToMap() {
+        window.location.href = "map.html";
+      }
+    </script>
+  </body>
+</html>
