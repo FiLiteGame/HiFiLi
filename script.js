@@ -1,7 +1,10 @@
 const SUPABASE_URL = "https://yavnepiupguxlxyofjbm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ixQgZBF5febYtaGr6zKupw_QrDtbJHw";
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(
+  "https://yavnepiupguxlxyofjbm.supabase.co",
+  "sb_publishable_ixQgZBF5febYtaGr6zKupw_QrDtbJHw",
+);
 async function testConnection() {
   const { data, error } = await supabaseClient
     .from("players")
