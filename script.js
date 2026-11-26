@@ -1,5 +1,4 @@
 const SUPABASE_URL = "https://yavnepiupguxlxyofjbm.supabase.co";
-
 const SUPABASE_KEY = "sb_publishable_ixQgZBF5febYtaGr6zKupw_QrDtbJHw";
 
 if (!window.supabase) {
@@ -11,6 +10,10 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 function isOnlineDbConfigured() {
   return Boolean(SUPABASE_URL && SUPABASE_KEY);
 }
+
+// ===============================
+// BẢO VỆ TRANG GAME
+// ===============================
 async function protectGamePage() {
   const { data, error } = await supabaseClient.auth.getSession();
 
@@ -101,6 +104,9 @@ async function getCurrentUser() {
   return data.user;
 }
 
+// ===============================
+// KIỂM TRA KẾT NỐI
+// ===============================
 async function testConnection() {
   const { data, error } = await supabaseClient
     .from("players")
@@ -110,14 +116,18 @@ async function testConnection() {
   if (error) {
     console.error("Connection error:", error.message);
   } else {
+    // Lưu ý: nếu RLS chặn đọc, data sẽ là [] chứ không phải lỗi.
     console.log("FiLite connected to Supabase!", data);
   }
 }
 
 testConnection();
 
+// ===============================
+// HỒ SƠ NGƯỜI CHƠI
+// ===============================
 async function createPlayer(nickname) {
-  const cleanName = nickname.trim();
+  const cleanName = (nickname || "").trim();
 
   if (!cleanName) {
     throw new Error("Nickname cannot be empty");
@@ -215,76 +225,53 @@ async function savePlayerProgress(playerId, totalFi) {
     throw error;
   }
 }
+
+// ===============================
+// ĐỒNG BỘ ĐIỂM LÊN BẢNG XẾP HẠNG
+// ===============================
 async function syncScoreToOnline(entry) {
   try {
+    // 1. Lấy người dùng đang đăng nhập
     const {
       data: { user },
       error: authError,
     } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
-      console.warn("Player is not logged in.");
+      console.error("Người chơi chưa đăng nhập:", authError);
       return false;
     }
 
-    async function syncScoreToOnline(entry) {
-      try {
-        // 1. Lấy người dùng đang đăng nhập
-        const {
-          data: { user },
-          error: authError,
-        } = await supabaseClient.auth.getUser();
+    // 2. Tìm hồ sơ người chơi trong bảng players
+    let { data: player, error: playerError } = await supabaseClient
+      .from("players")
+      .select("id, nickname")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-        if (authError || !user) {
-          console.error("Người chơi chưa đăng nhập:", authError);
-          return false;
-        }
-
-        // 2. Tìm hồ sơ người chơi trong bảng players
-        const { data: player, error: playerError } = await supabaseClient
-          .from("players")
-          .select("id, nickname")
-          .eq("user_id", user.id)
-          .single();
-
-        if (playerError || !player) {
-          console.error("Không tìm thấy hồ sơ người chơi:", playerError);
-          return false;
-        }
-
-        // 3. Chuẩn bị dữ liệu điểm
-        const totalFi = Math.max(
-          0,
-          Math.floor(Number(entry.total_fi ?? entry.cash) || 0),
-        );
-
-        const playerData = {
-          player_id: player.id,
-          total_fi: totalFi,
-          updated_at: new Date().toISOString(),
-        };
-
-        // 4. Lưu vào player_stats
-        const { data, error } = await supabaseClient
-          .from("player_stats")
-          .upsert(playerData, {
-            onConflict: "player_id",
-          })
-          .select();
-
-        if (error) {
-          console.error("Leaderboard sync error:", error);
-          return false;
-        }
-
-        console.log("Leaderboard synced successfully!", data);
-        return true;
-      } catch (error) {
-        console.error("Leaderboard network error:", error);
-        return false;
-      }
+    if (playerError) {
+      throw playerError;
     }
 
+    // Chưa có hồ sơ (ví dụ đăng ký cần xác nhận email) -> tự tạo
+    if (!player) {
+      const fallbackName = (user.email || "player").split("@")[0].slice(0, 20);
+      player = await createPlayer(fallbackName);
+    }
+
+    // 3. Chuẩn bị dữ liệu điểm
+    const totalFi = Math.max(
+      0,
+      Math.floor(Number(entry?.total_fi ?? entry?.cash) || 0),
+    );
+
+    const playerData = {
+      player_id: player.id,
+      total_fi: totalFi,
+      updated_at: new Date().toISOString(),
+    };
+
+    // 4. Lưu vào player_stats
     const { data, error } = await supabaseClient
       .from("player_stats")
       .upsert(playerData, {
@@ -305,6 +292,9 @@ async function syncScoreToOnline(entry) {
   }
 }
 
+// ===============================
+// LẤY BẢNG XẾP HẠNG
+// ===============================
 async function fetchOnlineLeaderboard() {
   try {
     const { data, error } = await supabaseClient
@@ -357,7 +347,8 @@ async function renderGlobalLeaderboard() {
 
   const players = await fetchOnlineLeaderboard();
 
-  if (!players.length) {
+  // fetchOnlineLeaderboard trả về null khi lỗi
+  if (!players || !players.length) {
     container.innerHTML = `
       <div class="text-center py-6 text-slate-500">
         No leaderboard data available.
@@ -381,18 +372,19 @@ async function renderGlobalLeaderboard() {
         </span>
 
         <span class="font-semibold">
-          ${escapeHtml(player.nickname)}
+          ${escapeHtml(player.name)}
         </span>
       </div>
 
       <span class="font-bold text-emerald-600">
-        ${player.total_fi.toLocaleString("en-US")} FI
+        ${player.cash.toLocaleString("en-US")} FI
       </span>
     </div>
   `,
     )
     .join("");
 }
+
 function escapeHtml(value) {
   return String(value).replace(
     /[&<>"']/g,
