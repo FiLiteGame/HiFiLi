@@ -1,15 +1,16 @@
 const SUPABASE_URL = "https://yavnepiupguxlxyofjbm.supabase.co";
+
 const SUPABASE_KEY = "sb_publishable_ixQgZBF5febYtaGr6zKupw_QrDtbJHw";
 
 if (!window.supabase) {
   throw new Error("Supabase SDK chưa được tải!");
 }
 
-const supabaseClient = window.supabase.createClient(
-  "https://yavnepiupguxlxyofjbm.supabase.co",
-  "sb_publishable_ixQgZBF5febYtaGr6zKupw_QrDtbJHw",
-);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+function isOnlineDbConfigured() {
+  return Boolean(SUPABASE_URL && SUPABASE_KEY);
+}
 async function protectGamePage() {
   const { data, error } = await supabaseClient.auth.getSession();
 
@@ -122,40 +123,77 @@ async function createPlayer(nickname) {
     throw new Error("Nickname cannot be empty");
   }
 
-  const { data, error } = await supabaseClient
-    .from("players")
-    .insert({
-      nickname: cleanName,
-    })
-    .select("id, nickname")
-    .single();
+  try {
+    // 1. Lấy tài khoản đang đăng nhập
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseClient.auth.getUser();
 
-  if (error) {
+    if (authError || !user) {
+      throw new Error("Bạn cần đăng nhập trước khi tạo hồ sơ!");
+    }
+
+    // 2. Kiểm tra người chơi đã có hồ sơ chưa
+    const { data: existingPlayer, error: findError } = await supabaseClient
+      .from("players")
+      .select("id, nickname")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (findError) {
+      throw findError;
+    }
+
+    let player;
+
+    if (existingPlayer) {
+      // Đã có hồ sơ: sử dụng hồ sơ cũ
+      player = existingPlayer;
+    } else {
+      // Chưa có hồ sơ: tạo hồ sơ gắn với tài khoản
+      const { data, error } = await supabaseClient
+        .from("players")
+        .insert({
+          user_id: user.id,
+          nickname: cleanName,
+        })
+        .select("id, nickname")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      player = data;
+    }
+
+    // 3. Khởi tạo điểm nếu chưa có
+    const { error: statsError } = await supabaseClient
+      .from("player_stats")
+      .upsert(
+        {
+          player_id: player.id,
+          total_fi: 0,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "player_id",
+          ignoreDuplicates: true,
+        },
+      );
+
+    if (statsError) {
+      throw statsError;
+    }
+
+    console.log("Player profile ready:", player);
+
+    return player;
+  } catch (error) {
     console.error("Create player error:", error);
     throw error;
   }
-
-  // Initialize player's stats
-  const { error: statsError } = await supabaseClient
-    .from("player_stats")
-    .upsert(
-      {
-        player_id: data.id,
-        total_fi: 0,
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "player_id",
-        ignoreDuplicates: true,
-      },
-    );
-
-  if (statsError) {
-    console.error("Initialize stats error:", statsError);
-    throw statsError;
-  }
-
-  return data;
 }
 
 async function savePlayerProgress(playerId, totalFi) {
@@ -189,11 +227,63 @@ async function syncScoreToOnline(entry) {
       return false;
     }
 
-    const playerData = {
-      player_id: user.id,
-      total_fi: Number(entry.total_fi) || 0,
-      updated_at: new Date().toISOString(),
-    };
+    async function syncScoreToOnline(entry) {
+      try {
+        // 1. Lấy người dùng đang đăng nhập
+        const {
+          data: { user },
+          error: authError,
+        } = await supabaseClient.auth.getUser();
+
+        if (authError || !user) {
+          console.error("Người chơi chưa đăng nhập:", authError);
+          return false;
+        }
+
+        // 2. Tìm hồ sơ người chơi trong bảng players
+        const { data: player, error: playerError } = await supabaseClient
+          .from("players")
+          .select("id, nickname")
+          .eq("user_id", user.id)
+          .single();
+
+        if (playerError || !player) {
+          console.error("Không tìm thấy hồ sơ người chơi:", playerError);
+          return false;
+        }
+
+        // 3. Chuẩn bị dữ liệu điểm
+        const totalFi = Math.max(
+          0,
+          Math.floor(Number(entry.total_fi ?? entry.cash) || 0),
+        );
+
+        const playerData = {
+          player_id: player.id,
+          total_fi: totalFi,
+          updated_at: new Date().toISOString(),
+        };
+
+        // 4. Lưu vào player_stats
+        const { data, error } = await supabaseClient
+          .from("player_stats")
+          .upsert(playerData, {
+            onConflict: "player_id",
+          })
+          .select();
+
+        if (error) {
+          console.error("Leaderboard sync error:", error);
+          return false;
+        }
+
+        console.log("Leaderboard synced successfully!", data);
+        return true;
+      } catch (error) {
+        console.error("Leaderboard network error:", error);
+        return false;
+      }
+    }
 
     const { data, error } = await supabaseClient
       .from("player_stats")
@@ -214,6 +304,7 @@ async function syncScoreToOnline(entry) {
     return false;
   }
 }
+
 async function fetchOnlineLeaderboard() {
   try {
     const { data, error } = await supabaseClient
@@ -235,20 +326,24 @@ async function fetchOnlineLeaderboard() {
 
     if (error) {
       console.error("Leaderboard loading error:", error);
-      return [];
+      return null;
     }
 
     return (data || []).map((player) => ({
       player_id: player.player_id,
-      nickname: player.players?.nickname || "Anonymous",
-      total_fi: Number(player.total_fi) || 0,
+      name: player.players?.nickname || "Anonymous",
+      gender: null,
+      level: null,
+      day: null,
+      cash: Number(player.total_fi) || 0,
       updated_at: player.updated_at,
     }));
   } catch (error) {
     console.error("Leaderboard error:", error);
-    return [];
+    return null;
   }
 }
+
 async function renderGlobalLeaderboard() {
   const container = document.getElementById("globalLeaderboard");
 
@@ -310,9 +405,4 @@ function escapeHtml(value) {
         "'": "&#39;",
       })[char],
   );
-}
-const synced = await syncScoreToOnline(entry);
-
-if (synced) {
-  await renderGlobalLeaderboard();
 }

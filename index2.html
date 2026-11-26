@@ -2339,93 +2339,7 @@
       }
       // ==================== ONLINE DATABASE (SUPABASE) CONFIG ====================
       // Dán Project URL và Anon Public Key từ Supabase vào 2 dòng dưới đây khi đưa lên web:
-      const ONLINE_DB_CONFIG = {
-        "https://yavnepiupguxlxyofjbm.supabase.co": "", 
-        "sb_publishable_ixQgZBF5febYtaGr6zKupw_QrDtbJHw": "", // Ví dụ: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-      };
-
-      function isOnlineDbConfigured() {
-        return Boolean(
-          ONLINE_DB_CONFIG.SUPABASE_URL && ONLINE_DB_CONFIG.SUPABASE_KEY,
-        );
-      }
-
-     
-async function syncScoreToOnline(entry) {
-  if (!isOnlineDbConfigured()) {
-    console.error("Supabase chưa được cấu hình URL hoặc KEY!");
-    return false;
-  }
-
-  try {
-    const res = await fetch(
-      `${ONLINE_DB_CONFIG.SUPABASE_URL}/rest/v1/player_stats`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: ONLINE_DB_CONFIG.SUPABASE_KEY,
-          Authorization: `Bearer ${ONLINE_DB_CONFIG.SUPABASE_KEY}`,
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify({
-          name: entry.name,
-          gender: entry.gender,
-          level: entry.level,
-          day: entry.day,
-          cash: entry.cash,
-        }),
-      },
-    );
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("Lỗi khi lưu điểm lên Supabase:", res.status, errorText);
-      return false;
-    }
-
-    console.log("Đã lưu điểm lên Supabase thành công!");
-    return true;
-
-  } catch (e) {
-    console.error("Lỗi kết nối Supabase:", e);
-    return false;
-  }
-}
-
-async function fetchOnlineLeaderboard() {
-  if (!isOnlineDbConfigured()) {
-    console.error("Supabase chưa được cấu hình URL hoặc KEY!");
-    return null;
-  }
-
-  try {
-    const res = await fetch(
-      `${ONLINE_DB_CONFIG.SUPABASE_URL}/rest/v1/player_stats?select=name,gender,level,day,cash,created_at&order=cash.desc&limit=30`,
-      {
-        headers: {
-          apikey: ONLINE_DB_CONFIG.SUPABASE_KEY,
-          Authorization: `Bearer ${ONLINE_DB_CONFIG.SUPABASE_KEY}`,
-        },
-      },
-    );
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("Lỗi khi tải bảng xếp hạng:", res.status, errorText);
-      return null;
-    }
-
-    const data = await res.json();
-    console.log("Tải bảng xếp hạng thành công:", data);
-    return data;
-
-  } catch (e) {
-    console.error("Lỗi kết nối Supabase:", e);
-    return null;
-  }
-}
-
+    
       function savePlayHistory(list) {
         try {
           localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 25)));
@@ -6481,7 +6395,13 @@ for (let i = 0; i <= 4; i++) {
                 <span class="font-retro font-bold text-base w-7 text-center">${rank}</span>
                 <div>
                   <div class="font-bold text-slate-900">${av} ${e.name} ${e.live ? '<span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 rounded">LIVE</span>' : ""}</div>
-                  <div class="text-[10px] text-slate-500">LV.${e.level} • ${L.day} ${e.day}/50</div>
+                  <div class="text-[10px] text-slate-500">
+  ${
+    e.level != null
+      ? `LV.${e.level} • ${L.day} ${e.day}/50`
+      : "Global Player"
+  }
+</div>
                 </div>
               </div>
               <div class="font-retro font-bold text-sm text-emerald-700 shrink-0">${fmt(e.cash)}</div>
@@ -6513,19 +6433,22 @@ for (let i = 0; i <= 4; i++) {
               .getElementById("lbClose")
               .addEventListener("click", closeModal);
             const sb = document.getElementById("lbSyncNow");
-            if (sb)
-              sb.addEventListener("click", async () => {
-                await syncScoreToOnline({
-                  name: state.player.name,
-                  gender: state.player.gender,
-                  level: state.level,
-                  day: state.day,
-                  cash: Math.round(state.cash),
-                });
-                SFX.coin();
-                showToast(L.histSavedToast, "success");
-                openLeaderboardModal();
-              });
+            if (sb) {
+  sb.addEventListener("click", async () => {
+    const synced = await syncScoreToOnline({
+      cash: Math.round(state.cash),
+    });
+
+    if (synced) {
+      SFX.coin();
+      showToast("Đồng bộ điểm thành công!", "success");
+    } else {
+      showToast("Đồng bộ thất bại. Kiểm tra Console!", "error");
+    }
+
+    openLeaderboardModal();
+  });
+}
           }
         }
       }
