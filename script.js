@@ -1,6 +1,10 @@
 const SUPABASE_URL = "https://yavnepiupguxlxyofjbm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ixQgZBF5febYtaGr6zKupw_QrDtbJHw";
 
+if (!window.supabase) {
+  throw new Error("Supabase SDK chưa được tải!");
+}
+
 const supabaseClient = window.supabase.createClient(
   "https://yavnepiupguxlxyofjbm.supabase.co",
   "sb_publishable_ixQgZBF5febYtaGr6zKupw_QrDtbJHw",
